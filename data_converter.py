@@ -191,8 +191,5 @@ def run():
 
 
 if __name__ == '__main__':
-    import jimit as ji
-    print ji.JITime.gmt()
     run()
-    print ji.JITime.gmt()
 
