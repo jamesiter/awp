@@ -167,9 +167,6 @@ def run():
             if i == 0:
                 continue
 
-            if i == 300:
-                break
-
             depth_market_data = dict()
             row = line.split(',')
             data_time = row[0].split(' ')
