@@ -114,8 +114,7 @@ class DateConverter(object):
             # 此处可以处理一些边界操作。比如对上一个区间的值做特殊处理等。
 
             if save_dir_path is not None:
-                file_name = '_'.join([depth_market_data['trading_day'],
-                                      self.interval.__str__()]) + '.json'
+                file_name = self.interval.__str__() + '.json'
                 save_path = '/'.join([save_dir_path, file_name])
 
                 if not os.path.isdir(save_dir_path):
