@@ -22,7 +22,11 @@ def incept_config():
     }
 
     def usage():
-        print "Usage:%s [-f] [--config_file]" % sys.argv[0]
+        print "Usage:%s [-s] [--data_source]" % sys.argv[0]
+        print "-s --data_source, is the path of data file."
+        print "-o --output_dir, is the output directory. optional."
+        print "-n --name, is the instrument id. optional."
+        print "-g --granularities, default are 2,5,10,30,60 minutes, delimiter is a comma. optional."
 
     opts = None
     try:
@@ -55,6 +59,8 @@ def incept_config():
 
     if 'data_source' not in config:
         print 'Must specify the -s(data_source) arguments.'
+        usage()
+        exit(1)
 
     if 'name' not in config:
         config['name'] = os.path.basename(config['data_source']).split('.')[0]
