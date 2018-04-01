@@ -104,8 +104,13 @@ class DateConverter(object):
             if key not in depth_market_data:
                 return
 
+        trading_day = depth_market_data['trading_day']
+        update_time = depth_market_data['update_time']
         date_time = ' '.join([depth_market_data['trading_day'], depth_market_data['update_time']])
-        ts_step = int(time.mktime(time.strptime(date_time, "%Y%m%d %H:%M:%S"))) / self.interval
+        # ts_step = int(time.mktime(time.strptime(date_time, "%Y%m%d %H:%M:%S"))) / self.interval
+        ts_step = int(time.mktime((int(trading_day[4]), int(trading_day[4:6]), int(trading_day[6:]),
+                                   int(update_time[:2]), int(update_time[3:5]), int(update_time[6:]),
+                                   0, 0, 0))) / self.interval
 
         if self.last_ts_step is None:
             self.last_ts_step = ts_step
@@ -173,15 +178,21 @@ def run():
             depth_market_data['trading_day'] = ''.join(data_time[0].split('/'))
             depth_market_data['update_time'] = data_time[1]
 
-            if not row[4].isdigit():
-                continue
-
-            depth_market_data['last_price'] = int(row[4])
+            if row[4].isdigit():
+                depth_market_data['last_price'] = int(row[4])
+            else:
+                try:
+                    depth_market_data['last_price'] = float(row[4])
+                except ValueError:
+                    continue
 
             for date_converter in date_converters:
                 date_converter.data_pump(depth_market_data=depth_market_data, save_dir_path=config['output_dir'])
 
 
 if __name__ == '__main__':
+    import jimit as ji
+    print ji.JITime.gmt()
     run()
+    print ji.JITime.gmt()
 
