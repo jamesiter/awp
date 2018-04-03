@@ -108,7 +108,7 @@ class DateConverter(object):
         update_time = depth_market_data['update_time']
         date_time = ' '.join([depth_market_data['trading_day'], depth_market_data['update_time']])
         # ts_step = int(time.mktime(time.strptime(date_time, "%Y%m%d %H:%M:%S"))) / self.interval
-        ts_step = int(time.mktime((int(trading_day[4]), int(trading_day[4:6]), int(trading_day[6:]),
+        ts_step = int(time.mktime((int(trading_day[:4]), int(trading_day[4:6]), int(trading_day[6:]),
                                    int(update_time[:2]), int(update_time[3:5]), int(update_time[6:]),
                                    0, 0, 0))) / self.interval
 
