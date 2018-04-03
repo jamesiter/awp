@@ -5,6 +5,7 @@
 
 
 from itertools import chain
+import time
 
 
 __author__ = 'James Iter'
@@ -217,3 +218,28 @@ futures_trading_period_mapping = {
     "sc": list(chain(INE['daytime'], INE['night'])),            # 螺纹钢1709
 }
 
+
+def get_futures_trading_period_mapping_by_ts(futures_trading_period_mapping=None,
+                                             begin=None, end=None):
+    workdays = dict()
+    the_day_ts = int(time.mktime(time.strptime(begin, '%Y-%m-%d')))
+    end_day_ts = int(time.mktime(time.strptime(end, '%Y-%m-%d'))) + 86400
+
+    while the_day_ts < end_day_ts:
+        the_day_structure_time = time.localtime(the_day_ts)
+        the_day_ts += 86400
+        the_day = time.strftime("%Y-%m-%d", the_day_structure_time)
+        day_of_the_week = time.strftime("%w", the_day_structure_time)
+
+        # 公共假日、正常周末 略过
+        if the_day in HOLIDAYS or (day_of_the_week in ['0', '6'] and the_day not in MAKE_UP_DAYS):
+            continue
+
+        workdays[the_day] = list()
+
+    return workdays
+
+
+days = get_futures_trading_period_mapping_by_ts(futures_trading_period_mapping='', begin='2018-1-1', end='2019-1-1')
+
+print days
