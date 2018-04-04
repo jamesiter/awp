@@ -4,7 +4,6 @@
 # 交易时段
 
 
-from itertools import chain
 import time
 from collections import namedtuple
 
@@ -141,7 +140,7 @@ EXCHANGE_TRADING_PERIOD = {
 
 TradingPeriod = namedtuple('TradingPeriod', 'exchange_code period')
 
-futures_trading_period_mapping = {
+FUTURES_TRADING_PERIOD_MAPPING = {
     # 中金所
     "IC": [TradingPeriod(exchange_code='CFFEX_STOCK_INDEX', period='daytime')],     # 中证500股指
     "IF": [TradingPeriod(exchange_code='CFFEX_STOCK_INDEX', period='daytime')],     # 沪深300股指
@@ -242,106 +241,114 @@ futures_trading_period_mapping = {
 }
 
 
-def get_workdays(begin=None, end=None):
-    _workdays = list()
-    the_day_ts = int(time.mktime(time.strptime(begin, '%Y-%m-%d')))
-    end_day_ts = int(time.mktime(time.strptime(end, '%Y-%m-%d')))
+class TradingPeriod(object):
 
-    while the_day_ts < end_day_ts:
-        the_day_structure_time = time.localtime(the_day_ts)
-        the_day_ts += 86400
-        the_day = time.strftime("%Y-%m-%d", the_day_structure_time)
-        day_of_the_week = time.strftime("%w", the_day_structure_time)
+    @staticmethod
+    def get_workdays(begin=None, end=None):
+        _workdays = list()
+        the_day_ts = int(time.mktime(time.strptime(begin, '%Y-%m-%d')))
+        end_day_ts = int(time.mktime(time.strptime(end, '%Y-%m-%d')))
 
-        # 公共假日、周末 略过
-        if the_day in HOLIDAYS or day_of_the_week in ['0', '6']:
-            continue
+        while the_day_ts < end_day_ts:
+            the_day_structure_time = time.localtime(the_day_ts)
+            the_day_ts += 86400
+            the_day = time.strftime("%Y-%m-%d", the_day_structure_time)
+            day_of_the_week = time.strftime("%w", the_day_structure_time)
 
-        _workdays.append(the_day)
+            # 公共假日、周末 略过
+            if the_day in HOLIDAYS or day_of_the_week in ['0', '6']:
+                continue
 
-    return _workdays
+            _workdays.append(the_day)
+
+        return _workdays
+
+    @staticmethod
+    def get_exchange_trading_period_by_ts(exchange_trading_period=None, the_day=None,
+                                          exchange_trading_period_by_ts=None):
+
+        assert isinstance(exchange_trading_period, dict)
+
+        if exchange_trading_period_by_ts is None:
+            exchange_trading_period_by_ts = dict()
+
+        assert isinstance(exchange_trading_period_by_ts, dict)
+        next_day_exchange_trading_period_by_ts = None
+
+        for k, v in exchange_trading_period.items():
+            if k not in exchange_trading_period_by_ts:
+                exchange_trading_period_by_ts[k] = dict()
+
+            assert isinstance(exchange_trading_period[k], dict)
+
+            for k2, v2 in exchange_trading_period[k].items():
+                if k2 not in exchange_trading_period_by_ts[k]:
+                    exchange_trading_period_by_ts[k][k2] = list()
+
+                assert isinstance(v2, list)
+                assert isinstance(exchange_trading_period_by_ts[k][k2], list)
+
+                for item in v2:
+                    ts1 = int(time.mktime(time.strptime(' '.join([the_day, item[0]]), '%Y-%m-%d %H:%M:%S')))
+                    ts2 = int(time.mktime(time.strptime(' '.join([the_day, item[1]]), '%Y-%m-%d %H:%M:%S')))
+
+                    # 交易时间跨天问题
+                    if ts1 > ts2:
+                        ts2 += 86400
+                        # 因为时区问题，故而加8小时的秒数进行计时
+                        end_of_day_ts = ts2 - (ts2 + 28800) % 86400
+                        exchange_trading_period_by_ts[k][k2].append((ts1, end_of_day_ts))
+
+                        next_day = time.strftime("%Y-%m-%d", time.localtime(ts2))
+
+                        if not isinstance(next_day_exchange_trading_period_by_ts, dict):
+                            next_day_exchange_trading_period_by_ts = dict()
+
+                        if next_day not in next_day_exchange_trading_period_by_ts:
+                            next_day_exchange_trading_period_by_ts[next_day] = dict()
+
+                        if k not in next_day_exchange_trading_period_by_ts[next_day]:
+                            next_day_exchange_trading_period_by_ts[next_day][k] = dict()
+
+                        if k2 not in next_day_exchange_trading_period_by_ts[next_day][k]:
+                            next_day_exchange_trading_period_by_ts[next_day][k][k2] = list()
+
+                        next_day_exchange_trading_period_by_ts[next_day][k][k2].append((end_of_day_ts, ts2))
+
+                    else:
+                        exchange_trading_period_by_ts[k][k2].append((ts1, ts2))
+
+        return exchange_trading_period_by_ts, next_day_exchange_trading_period_by_ts
+
+    @classmethod
+    def get_workdays_exchange_trading_period(cls, _workdays=None, exchange_trading_period=None):
+        _workdays_exchange_trading_period_by_ts = dict()
+        _next_day_exchange_trading_period_by_ts = None
+
+        for the_day in _workdays:
+            _workdays_exchange_trading_period_by_ts[the_day], _next_day_exchange_trading_period_by_ts = \
+                cls.get_exchange_trading_period_by_ts(
+                    exchange_trading_period=exchange_trading_period, the_day=the_day,
+                    exchange_trading_period_by_ts=_next_day_exchange_trading_period_by_ts)
+
+            if _next_day_exchange_trading_period_by_ts is not None and \
+                    isinstance(_next_day_exchange_trading_period_by_ts, dict):
+                for k, v in _next_day_exchange_trading_period_by_ts.items():
+                    _workdays_exchange_trading_period_by_ts[k] = v
+                    _next_day_exchange_trading_period_by_ts = v
+
+        return _workdays_exchange_trading_period_by_ts
 
 
-def get_exchange_trading_period_by_ts(exchange_trading_period=None, the_day=None, exchange_trading_period_by_ts=None):
+"""
 
-    assert isinstance(exchange_trading_period, dict)
-
-    if exchange_trading_period_by_ts is None:
-        exchange_trading_period_by_ts = dict()
-
-    assert isinstance(exchange_trading_period_by_ts, dict)
-    next_day_exchange_trading_period_by_ts = None
-
-    for k, v in exchange_trading_period.items():
-        if k not in exchange_trading_period_by_ts:
-            exchange_trading_period_by_ts[k] = dict()
-
-        assert isinstance(exchange_trading_period[k], dict)
-
-        for k2, v2 in exchange_trading_period[k].items():
-            if k2 not in exchange_trading_period_by_ts[k]:
-                exchange_trading_period_by_ts[k][k2] = list()
-
-            assert isinstance(v2, list)
-            assert isinstance(exchange_trading_period_by_ts[k][k2], list)
-
-            for item in v2:
-                ts1 = int(time.mktime(time.strptime(' '.join([the_day, item[0]]), '%Y-%m-%d %H:%M:%S')))
-                ts2 = int(time.mktime(time.strptime(' '.join([the_day, item[1]]), '%Y-%m-%d %H:%M:%S')))
-
-                # 交易时间跨天问题
-                if ts1 > ts2:
-                    ts2 += 86400
-                    # 因为时区问题，故而加8小时的秒数进行计时
-                    end_of_day_ts = ts2 - (ts2 + 28800) % 86400
-                    exchange_trading_period_by_ts[k][k2].append((ts1, end_of_day_ts))
-
-                    next_day = time.strftime("%Y-%m-%d", time.localtime(ts2))
-
-                    if not isinstance(next_day_exchange_trading_period_by_ts, dict):
-                        next_day_exchange_trading_period_by_ts = dict()
-
-                    if next_day not in next_day_exchange_trading_period_by_ts:
-                        next_day_exchange_trading_period_by_ts[next_day] = dict()
-
-                    if k not in next_day_exchange_trading_period_by_ts[next_day]:
-                        next_day_exchange_trading_period_by_ts[next_day][k] = dict()
-
-                    if k2 not in next_day_exchange_trading_period_by_ts[next_day][k]:
-                        next_day_exchange_trading_period_by_ts[next_day][k][k2] = list()
-
-                    next_day_exchange_trading_period_by_ts[next_day][k][k2].append((end_of_day_ts, ts2))
-
-                else:
-                    exchange_trading_period_by_ts[k][k2].append((ts1, ts2))
-
-    return exchange_trading_period_by_ts, next_day_exchange_trading_period_by_ts
-
-
-def get_workdays_exchange_trading_period(_workdays=None, exchange_trading_period=None):
-    _workdays_exchange_trading_period_by_ts = dict()
-    _next_day_exchange_trading_period_by_ts = None
-
-    for the_day in _workdays:
-        _workdays_exchange_trading_period_by_ts[the_day], _next_day_exchange_trading_period_by_ts = \
-            get_exchange_trading_period_by_ts(exchange_trading_period=exchange_trading_period, the_day=the_day,
-                                              exchange_trading_period_by_ts=_next_day_exchange_trading_period_by_ts)
-
-        if _next_day_exchange_trading_period_by_ts is not None and \
-                isinstance(_next_day_exchange_trading_period_by_ts, dict):
-            for k, v in _next_day_exchange_trading_period_by_ts.items():
-                _workdays_exchange_trading_period_by_ts[k] = v
-                _next_day_exchange_trading_period_by_ts = v
-
-    return _workdays_exchange_trading_period_by_ts
-
-
-workdays = get_workdays(begin='2018-1-1', end='2019-1-1')
+workdays = TradingPeriod.get_workdays(begin='2018-1-1', end='2019-1-1')
 
 
 workdays_exchange_trading_period_by_ts = \
-    get_workdays_exchange_trading_period(_workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
+    TradingPeriod.get_workdays_exchange_trading_period(
+        _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
 
 print workdays_exchange_trading_period_by_ts
 
-
+"""

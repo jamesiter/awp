@@ -8,6 +8,8 @@ import getopt
 import json
 import time
 
+from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD, FUTURES_TRADING_PERIOD_MAPPING
+
 
 __author__ = 'James Iter'
 __date__ = '2018/4/1'
@@ -154,8 +156,27 @@ class DateConverter(object):
             pass
 
 
+def trading_time_filter(date_time=None, contract_code=None, exchange_trading_period_by_ts=None):
+    ts = int(time.mktime(time.strptime(date_time, "%Y-%m-%d %H:%M:%S")))
+    contract_trading_period_ts = list()
+
+    for trading_period in FUTURES_TRADING_PERIOD_MAPPING[contract_code]:
+        contract_trading_period_ts.extend(
+            exchange_trading_period_by_ts[trading_period.exchange_code][trading_period.period])
+
+    for trading_period_ts in contract_trading_period_ts:
+        if trading_period_ts[0] <= ts <= trading_period_ts[1]:
+            return True
+
+    return False
+
+
 def run():
     config = incept_config()
+    workdays = TradingPeriod.get_workdays(begin='2018-1-1', end='2019-1-1')
+    workdays_exchange_trading_period_by_ts = \
+        TradingPeriod.get_workdays_exchange_trading_period(
+            _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
 
     date_converters = list()
 
@@ -173,10 +194,19 @@ def run():
 
             depth_market_data = dict()
             row = line.split(',')
-            data_time = row[0].split(' ')
+            date_time = row[0].split(' ')
 
-            depth_market_data['trading_day'] = ''.join(data_time[0].split('/'))
-            depth_market_data['update_time'] = data_time[1]
+            str_date = '-'.join(date_time[0].split('/'))
+
+            if str_date not in workdays_exchange_trading_period_by_ts:
+                continue
+
+            if not trading_time_filter(date_time=' '.join([str_date, date_time[1]]), contract_code='j',
+                                       exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[str_date]):
+                continue
+
+            depth_market_data['trading_day'] = ''.join(date_time[0].split('/'))
+            depth_market_data['update_time'] = date_time[1]
 
             if row[4].isdigit():
                 depth_market_data['last_price'] = int(row[4])
