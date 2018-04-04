@@ -243,7 +243,7 @@ futures_trading_period_mapping = {
 
 
 def get_workdays(begin=None, end=None):
-    _workdays = dict()
+    _workdays = list()
     the_day_ts = int(time.mktime(time.strptime(begin, '%Y-%m-%d')))
     end_day_ts = int(time.mktime(time.strptime(end, '%Y-%m-%d')))
 
@@ -257,16 +257,20 @@ def get_workdays(begin=None, end=None):
         if the_day in HOLIDAYS or day_of_the_week in ['0', '6']:
             continue
 
-        _workdays[the_day] = list()
+        _workdays.append(the_day)
 
     return _workdays
 
 
-def get_exchange_trading_period_by_ts(exchange_trading_period=None, the_day=None):
+def get_exchange_trading_period_by_ts(exchange_trading_period=None, the_day=None, exchange_trading_period_by_ts=None):
 
     assert isinstance(exchange_trading_period, dict)
 
-    exchange_trading_period_by_ts = dict()
+    if exchange_trading_period_by_ts is None:
+        exchange_trading_period_by_ts = dict()
+
+    assert isinstance(exchange_trading_period_by_ts, dict)
+    next_day_exchange_trading_period_by_ts = None
 
     for k, v in exchange_trading_period.items():
         if k not in exchange_trading_period_by_ts:
@@ -284,17 +288,50 @@ def get_exchange_trading_period_by_ts(exchange_trading_period=None, the_day=None
             for item in v2:
                 ts1 = int(time.mktime(time.strptime(' '.join([the_day, item[0]]), '%Y-%m-%d %H:%M:%S')))
                 ts2 = int(time.mktime(time.strptime(' '.join([the_day, item[1]]), '%Y-%m-%d %H:%M:%S')))
-                exchange_trading_period_by_ts[k][k2].append((ts1, ts2))
 
-    return exchange_trading_period_by_ts
+                # 交易时间跨天问题
+                if ts1 > ts2:
+                    ts2 += 86400
+                    # 因为时区问题，故而加8小时的秒数进行计时
+                    end_of_day_ts = ts2 - (ts2 + 28800) % 86400
+                    exchange_trading_period_by_ts[k][k2].append((ts1, end_of_day_ts))
+
+                    next_day = time.strftime("%Y-%m-%d", time.localtime(ts2))
+
+                    if not isinstance(next_day_exchange_trading_period_by_ts, dict):
+                        next_day_exchange_trading_period_by_ts = dict()
+
+                    if next_day not in next_day_exchange_trading_period_by_ts:
+                        next_day_exchange_trading_period_by_ts[next_day] = dict()
+
+                    if k not in next_day_exchange_trading_period_by_ts[next_day]:
+                        next_day_exchange_trading_period_by_ts[next_day][k] = dict()
+
+                    if k2 not in next_day_exchange_trading_period_by_ts[next_day][k]:
+                        next_day_exchange_trading_period_by_ts[next_day][k][k2] = list()
+
+                    next_day_exchange_trading_period_by_ts[next_day][k][k2].append((end_of_day_ts, ts2))
+
+                else:
+                    exchange_trading_period_by_ts[k][k2].append((ts1, ts2))
+
+    return exchange_trading_period_by_ts, next_day_exchange_trading_period_by_ts
 
 
 def get_workdays_exchange_trading_period(_workdays=None, exchange_trading_period=None):
     _workdays_exchange_trading_period_by_ts = dict()
+    _next_day_exchange_trading_period_by_ts = None
 
     for the_day in _workdays:
-        _workdays_exchange_trading_period_by_ts[the_day] = \
-            get_exchange_trading_period_by_ts(exchange_trading_period=exchange_trading_period, the_day=the_day)
+        _workdays_exchange_trading_period_by_ts[the_day], _next_day_exchange_trading_period_by_ts = \
+            get_exchange_trading_period_by_ts(exchange_trading_period=exchange_trading_period, the_day=the_day,
+                                              exchange_trading_period_by_ts=_next_day_exchange_trading_period_by_ts)
+
+        if _next_day_exchange_trading_period_by_ts is not None and \
+                isinstance(_next_day_exchange_trading_period_by_ts, dict):
+            for k, v in _next_day_exchange_trading_period_by_ts.items():
+                _workdays_exchange_trading_period_by_ts[k] = v
+                _next_day_exchange_trading_period_by_ts = v
 
     return _workdays_exchange_trading_period_by_ts
 
