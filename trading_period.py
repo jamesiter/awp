@@ -6,6 +6,7 @@
 
 from itertools import chain
 import time
+from collections import namedtuple
 
 
 __author__ = 'James Iter'
@@ -13,22 +14,6 @@ __date__ = '2018/4/3'
 __contact__ = 'james.iter.cn@gmail.com'
 __copyright__ = '(c) 2018 by James Iter.'
 
-
-# 周末补班
-MAKE_UP_DAYS = [
-    "2017-01-22",
-    "2017-02-04",
-    "2017-04-01",
-    "2017-05-27",
-    "2017-09-30",
-
-    "2018-02-11",
-    "2018-02-24",
-    "2018-04-08",
-    "2018-04-28",
-    "2018-09-29",
-    "2018-09-30"
-]
 
 # 公共假日
 HOLIDAYS = [
@@ -109,121 +94,158 @@ HOLIDAYS = [
     "2018-10-07"
 ]
 
-# 中国金融期货交易所 股指期货交易时间
-# http://www.cffex.com.cn
-CFFEX_STOCK_INDEX = {
-    'daytime': [('09:25:00', '11:30:00'), ('13:00:00', '15:00:00')]
+EXCHANGE_TRADING_PERIOD = {
+
+    # 中国金融期货交易所 股指期货交易时间
+    # http://www.cffex.com.cn
+    'CFFEX_STOCK_INDEX': {
+        'daytime': [('09:25:00', '11:30:00'), ('13:00:00', '15:00:00')]
+    },
+
+    # 中国金融期货交易所 国债期货交易时间
+    # http://www.cffex.com.cn
+    'CFFEX_NATIONAL_DEBT': {
+        'daytime': [('09:10:00', '11:30:00'), ('13:00:00', '15:15:00')]
+    },
+
+    # 郑州商品交易所交易时间
+    # http://www.czce.com.cn
+    'CZCE': {
+        'daytime': [('08:55:00', '10:15:01'), ('10:30:00', '11:30:00'), ('13:30:00', '15:00:00')],
+        'night': [('20:55:00', '23:30:00')]
+    },
+
+    # 上海期货交易所交易时间
+    # http://www.shfe.com.cn
+    'SHFE': {
+        'daytime': [('08:55:00', '10:15:01'), ('10:30:00', '11:30:00'), ('13:30:00', '15:00:00')],
+        'night_group_01': [('20:55:00', '02:30:00')],
+        'night_group_02': [('20:55:00', '01:00:00')],
+        'night_group_03': [('20:55:00', '23:00:00')]
+    },
+
+    # 大连商品交易所交易时间
+    # http://www.dce.com.cn
+    'DCE': {
+        'daytime': [('08:55:00', '10:15:01'), ('10:30:00', '11:30:00'), ('13:30:00', '15:00:00')],
+        'night': [('20:55:00', '23:30:00')]
+    },
+
+    # 上海国际能源交易所交易时间
+    # http://www.ine.cn
+    'INE': {
+        'daytime': [('08:55:00', '10:15:01'), ('10:30:00', '11:30:00'), ('13:30:00', '15:00:00')],
+        'night': [('20:55:00', '02:30:00')]
+    }
 }
 
-# 中国金融期货交易所 国债期货交易时间
-# http://www.cffex.com.cn
-CFFEX_NATIONAL_DEBT = {
-    'daytime': [('09:10:00', '11:30:00'), ('13:00:00', '15:15:00')]
-}
-
-# 郑州商品交易所交易时间
-# http://www.czce.com.cn
-CZCE = {
-    'daytime': [('08:55:00', '10:15:01'), ('10:30:00', '11:30:00'), ('13:30:00', '15:00:00')],
-    'night': [('20:55:00', '23:30:00')]
-}
-
-# 上海期货交易所交易时间
-# http://www.shfe.com.cn
-SHFE = {
-    'daytime': CZCE['daytime'],
-    'night_group_01': [('20:55:00', '02:30:00')],
-    'night_group_02': [('20:55:00', '01:00:00')],
-    'night_group_03': [('20:55:00', '23:00:00')]
-}
-
-# 大连商品交易所交易时间
-# http://www.dce.com.cn
-DCE = CZCE
-
-# 上海国际能源交易所交易时间
-# http://www.ine.cn
-INE = {
-    'daytime': CZCE['daytime'],
-    'night': SHFE['night_group_01']
-}
+TradingPeriod = namedtuple('TradingPeriod', 'exchange_code period')
 
 futures_trading_period_mapping = {
     # 中金所
-    "IC": CFFEX_STOCK_INDEX['daytime'],     # 中证500股指
-    "IF": CFFEX_STOCK_INDEX['daytime'],     # 沪深300股指
-    "IH": CFFEX_STOCK_INDEX['daytime'],     # 上证50股指
-    "TF": CFFEX_NATIONAL_DEBT['daytime'],   # 5年国债
-    "T": CFFEX_NATIONAL_DEBT['daytime'],    # 10年国债
+    "IC": [TradingPeriod(exchange_code='CFFEX_STOCK_INDEX', period='daytime')],     # 中证500股指
+    "IF": [TradingPeriod(exchange_code='CFFEX_STOCK_INDEX', period='daytime')],     # 沪深300股指
+    "IH": [TradingPeriod(exchange_code='CFFEX_STOCK_INDEX', period='daytime')],     # 上证50股指
+    "TF": [TradingPeriod(exchange_code='CFFEX_NATIONAL_DEBT', period='daytime')],   # 5年国债
+    "T": [TradingPeriod(exchange_code='CFFEX_NATIONAL_DEBT', period='daytime')],    # 10年国债
 
     # 郑商所
-    "CF": list(chain(CZCE['daytime'], CZCE['night'])),      # 棉花
-    "ZC": list(chain(CZCE['daytime'], CZCE['night'])),      # 动力煤
-    "SR": list(chain(CZCE['daytime'], CZCE['night'])),      # 白砂糖
-    "RM": list(chain(CZCE['daytime'], CZCE['night'])),      # 菜籽粕
-    "MA": list(chain(CZCE['daytime'], CZCE['night'])),      # 甲醇
-    "TA": list(chain(CZCE['daytime'], CZCE['night'])),      # PTA化纤
-    "FG": list(chain(CZCE['daytime'], CZCE['night'])),      # 玻璃
-    "OI": list(chain(CZCE['daytime'], CZCE['night'])),      # 菜籽油
-    "CY": list(chain(CZCE['daytime'], CZCE['night'])),      # 棉纱
-    "WH": CZCE['daytime'],                                  # 强筋麦709
-    "SM": CZCE['daytime'],                                  # 锰硅709
-    "SF": CZCE['daytime'],                                  # 硅铁709
-    "RS": CZCE['daytime'],                                  # 油菜籽709
-    "RI": CZCE['daytime'],                                  # 早籼稻709
-    "PM": CZCE['daytime'],                                  # 普通小麦709
-    "LR": CZCE['daytime'],                                  # 晚籼稻709
-    "JR": CZCE['daytime'],                                  # 粳稻709
-    "AP": CZCE['daytime'],                                  # 苹果
+    "CF": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # 棉花
+    "ZC": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # 动力煤
+    "SR": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # 白砂糖
+    "RM": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # 菜籽粕
+    "MA": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # 甲醇
+    "TA": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # PTA化纤
+    "FG": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # 玻璃
+    "OI": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # 菜籽油
+    "CY": [TradingPeriod(exchange_code='CZCE', period='daytime'),
+           TradingPeriod(exchange_code='CZCE', period='night')],      # 棉纱
+    "WH": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 强筋麦709
+    "SM": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 锰硅709
+    "SF": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 硅铁709
+    "RS": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 油菜籽709
+    "RI": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 早籼稻709
+    "PM": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 普通小麦709
+    "LR": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 晚籼稻709
+    "JR": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 粳稻709
+    "AP": [TradingPeriod(exchange_code='CZCE', period='daytime')],                                  # 苹果
 
     # 大商所
-    "j": list(chain(DCE['daytime'], DCE['night'])),         # 焦炭
-    "i": list(chain(DCE['daytime'], DCE['night'])),         # 铁矿石
-    "jm": list(chain(DCE['daytime'], DCE['night'])),        # 焦煤
-    "a": list(chain(DCE['daytime'], DCE['night'])),         # 黄大豆1号
-    "y": list(chain(DCE['daytime'], DCE['night'])),         # 豆油
-    "m": list(chain(DCE['daytime'], DCE['night'])),         # 豆粕
-    "b": list(chain(DCE['daytime'], DCE['night'])),         # 黄大豆2号
-    "p": list(chain(DCE['daytime'], DCE['night'])),         # 棕榈油
+    "j": [TradingPeriod(exchange_code='DCE', period='daytime'),
+          TradingPeriod(exchange_code='DCE', period='night')],         # 焦炭
+    "i": [TradingPeriod(exchange_code='DCE', period='daytime'),
+          TradingPeriod(exchange_code='DCE', period='night')],         # 铁矿石
+    "jm": [TradingPeriod(exchange_code='DCE', period='daytime'),
+           TradingPeriod(exchange_code='DCE', period='night')],        # 焦煤
+    "a": [TradingPeriod(exchange_code='DCE', period='daytime'),
+          TradingPeriod(exchange_code='DCE', period='night')],         # 黄大豆1号
+    "y": [TradingPeriod(exchange_code='DCE', period='daytime'),
+          TradingPeriod(exchange_code='DCE', period='night')],         # 豆油
+    "m": [TradingPeriod(exchange_code='DCE', period='daytime'),
+          TradingPeriod(exchange_code='DCE', period='night')],         # 豆粕
+    "b": [TradingPeriod(exchange_code='DCE', period='daytime'),
+          TradingPeriod(exchange_code='DCE', period='night')],         # 黄大豆2号
+    "p": [TradingPeriod(exchange_code='DCE', period='daytime'),
+          TradingPeriod(exchange_code='DCE', period='night')],         # 棕榈油
 
-    "jd": DCE['daytime'],                                   # 鲜鸡蛋1709
-    "l": DCE['daytime'],                                    # 聚乙烯1709
-    "v": DCE['daytime'],                                    # 聚氯乙烯1709
-    "pp": DCE['daytime'],                                   # 聚丙烯1709
-    "fb": DCE['daytime'],                                   # 纤维板1709
-    "cs": DCE['daytime'],                                   # 玉米淀粉1709
-    "c": DCE['daytime'],                                    # 黄玉米1709
-    "bb": DCE['daytime'],                                   # 胶合板1709
+    "jd": [TradingPeriod(exchange_code='DCE', period='daytime')],                                   # 鲜鸡蛋1709
+    "l": [TradingPeriod(exchange_code='DCE', period='daytime')],                                    # 聚乙烯1709
+    "v": [TradingPeriod(exchange_code='DCE', period='daytime')],                                    # 聚氯乙烯1709
+    "pp": [TradingPeriod(exchange_code='DCE', period='daytime')],                                   # 聚丙烯1709
+    "fb": [TradingPeriod(exchange_code='DCE', period='daytime')],                                   # 纤维板1709
+    "cs": [TradingPeriod(exchange_code='DCE', period='daytime')],                                   # 玉米淀粉1709
+    "c": [TradingPeriod(exchange_code='DCE', period='daytime')],                                    # 黄玉米1709
+    "bb": [TradingPeriod(exchange_code='DCE', period='daytime')],                                   # 胶合板1709
 
     # 上期所
-    "ag": list(chain(SHFE['daytime'], SHFE['night_group_01'])),  # 白银1709
-    "au": list(chain(SHFE['daytime'], SHFE['night_group_01'])),  # 黄金1710
+    "ag": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_01')],  # 白银1709
+    "au": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_01')],  # 黄金1710
 
-    "pb": list(chain(SHFE['daytime'], SHFE['night_group_02'])),  # 铅1709
-    "ni": list(chain(SHFE['daytime'], SHFE['night_group_02'])),  # 镍1709
-    "zn": list(chain(SHFE['daytime'], SHFE['night_group_02'])),  # 锌1709
-    "al": list(chain(SHFE['daytime'], SHFE['night_group_02'])),  # 铝1709
-    "sn": list(chain(SHFE['daytime'], SHFE['night_group_02'])),  # 锡1709
-    "cu": list(chain(SHFE['daytime'], SHFE['night_group_02'])),  # 铜1709
+    "pb": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_02')],  # 铅1709
+    "ni": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_02')],  # 镍1709
+    "zn": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_02')],  # 锌1709
+    "al": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_02')],  # 铝1709
+    "sn": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_02')],  # 锡1709
+    "cu": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_02')],  # 铜1709
 
-    "ru": list(chain(SHFE['daytime'], SHFE['night_group_03'])),  # 天然橡胶1709
-    "rb": list(chain(SHFE['daytime'], SHFE['night_group_03'])),  # 螺纹钢1709
-    "hc": list(chain(SHFE['daytime'], SHFE['night_group_03'])),  # 热轧板1709
-    "bu": list(chain(SHFE['daytime'], SHFE['night_group_03'])),  # 沥青1809
+    "ru": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_03')],  # 天然橡胶1709
+    "rb": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_03')],  # 螺纹钢1709
+    "hc": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_03')],  # 热轧板1709
+    "bu": [TradingPeriod(exchange_code='SHFE', period='daytime'),
+           TradingPeriod('SHFE', period='night_group_03')],  # 沥青1809
 
-    "wr": SHFE['daytime'],                                       # 线材1709
-    "fu": SHFE['daytime'],                                       # 燃料油1709
+    "wr": [TradingPeriod(exchange_code='SHFE', period='daytime')],                                       # 线材1709
+    "fu": [TradingPeriod(exchange_code='SHFE', period='daytime')],                                       # 燃料油1709
 
     # 能源所
-    "sc": list(chain(INE['daytime'], INE['night'])),            # 螺纹钢1709
+    "sc": [TradingPeriod(exchange_code='INE', period='daytime'),
+           TradingPeriod(exchange_code='INE', period='night')]            # 螺纹钢1709
 }
 
 
-def get_futures_trading_period_mapping_by_ts(futures_trading_period_mapping=None,
-                                             begin=None, end=None):
-    workdays = dict()
+def get_workdays(begin=None, end=None):
+    _workdays = dict()
     the_day_ts = int(time.mktime(time.strptime(begin, '%Y-%m-%d')))
-    end_day_ts = int(time.mktime(time.strptime(end, '%Y-%m-%d'))) + 86400
+    end_day_ts = int(time.mktime(time.strptime(end, '%Y-%m-%d')))
 
     while the_day_ts < end_day_ts:
         the_day_structure_time = time.localtime(the_day_ts)
@@ -231,15 +253,58 @@ def get_futures_trading_period_mapping_by_ts(futures_trading_period_mapping=None
         the_day = time.strftime("%Y-%m-%d", the_day_structure_time)
         day_of_the_week = time.strftime("%w", the_day_structure_time)
 
-        # 公共假日、正常周末 略过
-        if the_day in HOLIDAYS or (day_of_the_week in ['0', '6'] and the_day not in MAKE_UP_DAYS):
+        # 公共假日、周末 略过
+        if the_day in HOLIDAYS or day_of_the_week in ['0', '6']:
             continue
 
-        workdays[the_day] = list()
+        _workdays[the_day] = list()
 
-    return workdays
+    return _workdays
 
 
-days = get_futures_trading_period_mapping_by_ts(futures_trading_period_mapping='', begin='2018-1-1', end='2019-1-1')
+def get_exchange_trading_period_by_ts(exchange_trading_period=None, the_day=None):
 
-print days
+    assert isinstance(exchange_trading_period, dict)
+
+    exchange_trading_period_by_ts = dict()
+
+    for k, v in exchange_trading_period.items():
+        if k not in exchange_trading_period_by_ts:
+            exchange_trading_period_by_ts[k] = dict()
+
+        assert isinstance(exchange_trading_period[k], dict)
+
+        for k2, v2 in exchange_trading_period[k].items():
+            if k2 not in exchange_trading_period_by_ts[k]:
+                exchange_trading_period_by_ts[k][k2] = list()
+
+            assert isinstance(v2, list)
+            assert isinstance(exchange_trading_period_by_ts[k][k2], list)
+
+            for item in v2:
+                ts1 = int(time.mktime(time.strptime(' '.join([the_day, item[0]]), '%Y-%m-%d %H:%M:%S')))
+                ts2 = int(time.mktime(time.strptime(' '.join([the_day, item[1]]), '%Y-%m-%d %H:%M:%S')))
+                exchange_trading_period_by_ts[k][k2].append((ts1, ts2))
+
+    return exchange_trading_period_by_ts
+
+
+def get_workdays_exchange_trading_period(_workdays=None, exchange_trading_period=None):
+    _workdays_exchange_trading_period_by_ts = dict()
+
+    for the_day in _workdays:
+        _workdays_exchange_trading_period_by_ts[the_day] = \
+            get_exchange_trading_period_by_ts(exchange_trading_period=exchange_trading_period, the_day=the_day)
+
+    return _workdays_exchange_trading_period_by_ts
+
+
+workdays = get_workdays(begin='2018-1-1', end='2019-1-1')
+
+
+workdays_exchange_trading_period_by_ts = \
+    get_workdays_exchange_trading_period(_workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
+
+print workdays_exchange_trading_period_by_ts
+
+
