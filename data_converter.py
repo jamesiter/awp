@@ -34,11 +34,13 @@ def incept_config():
         print "-g --granularities, default are 2,5,10,30,60 minutes, delimiter is a comma. optional."
         print "-b --begin, default is HOLIDAYS first element, format is YYYY-MM-DD. optional."
         print "-e --end, default is today, format is YYYY-MM-DD. optional."
+        print "-t --offset, default is 0, unit is second. optional."
 
     opts = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hs:o:n:g:b:e:',
-                                   ['help', 'data_source=', 'output_dir=', 'name=', 'granularities=', 'begin=', 'end='])
+        opts, args = getopt.getopt(sys.argv[1:], 'hs:o:n:g:b:e:t:',
+                                   ['help', 'data_source=', 'output_dir=', 'name=', 'granularities=', 'begin=', 'end=',
+                                    'offset='])
     except getopt.GetoptError as e:
         print str(e)
         usage()
@@ -66,6 +68,9 @@ def incept_config():
 
         elif k in ("-e", "--end"):
             config['end'] = v
+
+        elif k in ("-t", "--offset"):
+            config['offset'] = int(v)
 
         else:
             print "unhandled option"
@@ -103,6 +108,9 @@ def incept_config():
 
     if 'end' not in config:
         config['end'] = time.strftime('%Y-%m-%d')
+
+    if 'offset' not in config:
+        config['offset'] = 0
 
     return config
 
@@ -213,19 +221,25 @@ def run():
 
             depth_market_data = dict()
             row = line.split(',')
+
+            row[0] = row[0].replace('/', '-')
+
+            if config['offset'] > 0:
+                ts = int(time.mktime(time.strptime(row[0], "%Y-%m-%d %H:%M:%S")))
+                ts += config['offset']
+                row[0] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+
             date_time = row[0].split(' ')
 
-            str_date = '-'.join(date_time[0].split('/'))
-
-            if str_date not in workdays_exchange_trading_period_by_ts:
+            if date_time[0] not in workdays_exchange_trading_period_by_ts:
                 continue
 
-            if not trading_time_filter(date_time=' '.join([str_date, date_time[1]]),
-                                       contract_code=config['contract_code'],
-                                       exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[str_date]):
+            if not trading_time_filter(
+                    date_time=row[0], contract_code=config['contract_code'],
+                    exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[date_time[0]]):
                 continue
 
-            depth_market_data['trading_day'] = ''.join(date_time[0].split('/'))
+            depth_market_data['trading_day'] = ''.join(date_time[0].split('-'))
             depth_market_data['update_time'] = date_time[1]
 
             if row[4].isdigit():
