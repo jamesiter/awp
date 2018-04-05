@@ -7,8 +7,9 @@ import sys
 import getopt
 import json
 import time
+import re
 
-from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD, FUTURES_TRADING_PERIOD_MAPPING
+from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD, FUTURES_TRADING_PERIOD_MAPPING, HOLIDAYS
 
 
 __author__ = 'James Iter'
@@ -23,17 +24,21 @@ def incept_config():
         'granularities': '2,5,10,30,60'
     }
 
+    pattern = re.compile(r'\D*')
+
     def usage():
         print "Usage:%s [-s] [--data_source]" % sys.argv[0]
         print "-s --data_source, is the path of data file."
         print "-o --output_dir, is the output directory. optional."
         print "-n --name, is the instrument id. optional."
         print "-g --granularities, default are 2,5,10,30,60 minutes, delimiter is a comma. optional."
+        print "-b --begin, default is HOLIDAYS first element, format is YYYY-MM-DD. optional."
+        print "-e --end, default is today, format is YYYY-MM-DD. optional."
 
     opts = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hs:o:n:g:',
-                                   ['help', 'data_source=', 'output_dir=', 'name=', 'granularities='])
+        opts, args = getopt.getopt(sys.argv[1:], 'hs:o:n:g:b:e:',
+                                   ['help', 'data_source=', 'output_dir=', 'name=', 'granularities=', 'begin=', 'end='])
     except getopt.GetoptError as e:
         print str(e)
         usage()
@@ -56,6 +61,12 @@ def incept_config():
         elif k in ("-g", "--granularities"):
             config['granularities'] = v
 
+        elif k in ("-b", "--begin"):
+            config['begin'] = v
+
+        elif k in ("-e", "--end"):
+            config['end'] = v
+
         else:
             print "unhandled option"
 
@@ -66,6 +77,8 @@ def incept_config():
 
     if 'name' not in config:
         config['name'] = os.path.basename(config['data_source']).split('.')[0]
+
+    config['contract_code'] = pattern.match(config['name']).group()
 
     for granularity in config['granularities'].split(','):
 
@@ -84,6 +97,12 @@ def incept_config():
             continue
 
         config['granularities'].append(granularity)
+
+    if 'begin' not in config:
+        config['begin'] = HOLIDAYS[0]
+
+    if 'end' not in config:
+        config['end'] = time.strftime('%Y-%m-%d')
 
     return config
 
@@ -173,7 +192,7 @@ def trading_time_filter(date_time=None, contract_code=None, exchange_trading_per
 
 def run():
     config = incept_config()
-    workdays = TradingPeriod.get_workdays(begin='2018-1-1', end='2019-1-1')
+    workdays = TradingPeriod.get_workdays(begin=config['begin'], end=config['end'])
     workdays_exchange_trading_period_by_ts = \
         TradingPeriod.get_workdays_exchange_trading_period(
             _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
@@ -201,7 +220,8 @@ def run():
             if str_date not in workdays_exchange_trading_period_by_ts:
                 continue
 
-            if not trading_time_filter(date_time=' '.join([str_date, date_time[1]]), contract_code='j',
+            if not trading_time_filter(date_time=' '.join([str_date, date_time[1]]),
+                                       contract_code=config['contract_code'],
                                        exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[str_date]):
                 continue
 
