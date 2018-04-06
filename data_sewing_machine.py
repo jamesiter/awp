@@ -201,7 +201,33 @@ def sewing_data_to_file_and_depositary(depth_market_data=None):
             DEPOSITARY_OF_KLINE[instrument_id][k]['k_line_pump'].str_k_line = None
 
 
-"""
+def get_k_line_column(instrument_id=None, interval=None, ohlc='high', depth=0):
+    """
+    :param instrument_id: 合约名称。
+    :param interval: 取样间隔。
+    :param ohlc: [Open|High|Low|Close]。
+    :param depth: 深度。默认 0 将获取所有。
+    :return: list。
+    """
+
+    ohlc = ohlc.lower()
+
+    assert ohlc in ['open', 'high', 'low', 'close']
+
+    k_line_column = list()
+    str_interval = str(interval)
+    max_depth = DEPOSITARY_OF_KLINE[instrument_id][str_interval]['data'].__len__()
+    if depth == 0 or depth >= max_depth:
+        depth = max_depth
+
+    depth = 0 - depth
+
+    for i in range(depth, 0):
+        k_line_column.append(DEPOSITARY_OF_KLINE[instrument_id][str_interval]['data'][i][ohlc])
+
+    return k_line_column
+
+
 def test():
     from collections import namedtuple
 
@@ -241,8 +267,8 @@ def test():
     for data in data_s:
         sewing_data_to_file_and_depositary(depth_market_data=data)
 
+    new_k_line_col = get_k_line_column(instrument_id='rb1805', interval=120, ohlc='high', depth=10)
+
     pass
 
-
-test()
-"""
+# test()
