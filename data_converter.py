@@ -122,6 +122,7 @@ class DateConverter(object):
         # interval: 单位(秒)
         self.interval = 60
         self.last_ts_step = None
+        self.name = None
 
     def data_pump(self, depth_market_data=None, save_dir_path=None):
         """
@@ -148,7 +149,7 @@ class DateConverter(object):
             # 此处可以处理一些边界操作。比如对上一个区间的值做特殊处理等。
 
             if save_dir_path is not None:
-                file_name = self.interval.__str__() + '.json'
+                file_name = '_'.join([self.name, self.interval.__str__()]) + '.json'
                 save_path = '/'.join([save_dir_path, file_name])
 
                 if not os.path.isdir(save_dir_path):
@@ -209,6 +210,7 @@ def run():
 
     for granularity in config['granularities']:
         date_converter = DateConverter()
+        date_converter.name = config['name']
         date_converter.interval = 60 * granularity
         date_converters.append(date_converter)
 
