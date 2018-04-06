@@ -118,7 +118,7 @@ def incept_config():
 class DateConverter(object):
 
     def __init__(self):
-        self.k_lines = dict()
+        self.k_line = dict()
         # interval: 单位(秒)
         self.interval = 60
         self.last_ts_step = None
@@ -156,15 +156,15 @@ class DateConverter(object):
                     os.makedirs(save_dir_path, 0755)
 
                 with open(save_path, 'a') as f:
-                    f.writelines(json.dumps(self.k_lines, ensure_ascii=False) + '\n')
+                    f.writelines(json.dumps(self.k_line, ensure_ascii=False) + '\n')
 
             self.last_ts_step = ts_step
-            self.k_lines = dict()
+            self.k_line = dict()
 
         last_price = depth_market_data['last_price']
 
-        if 'open' not in self.k_lines:
-            self.k_lines = {
+        if 'open' not in self.k_line:
+            self.k_line = {
                 'open': last_price,
                 'high': last_price,
                 'low': last_price,
@@ -172,13 +172,13 @@ class DateConverter(object):
                 'date_time': date_time
             }
 
-        self.k_lines['close'] = last_price
+        self.k_line['close'] = last_price
 
-        if last_price > self.k_lines['high']:
-            self.k_lines['high'] = last_price
+        if last_price > self.k_line['high']:
+            self.k_line['high'] = last_price
 
-        elif last_price < self.k_lines['low']:
-            self.k_lines['low'] = last_price
+        elif last_price < self.k_line['low']:
+            self.k_line['low'] = last_price
 
         else:
             pass
