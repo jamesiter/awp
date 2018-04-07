@@ -34,11 +34,12 @@ def incept_config():
         print "Usage:%s [-s] [--data_source_dir]" % sys.argv[0]
         print "-s --data_source_dir, is the path of data file directory."
         print "-g --granularities, default are 2,5,10,30,60 minutes, delimiter is a comma. optional."
+        print "-c --config. optional."
 
     opts = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hs:b:e:g:',
-                                   ['help', 'data_source_dir=', 'begin=', 'end=', 'granularities='])
+        opts, args = getopt.getopt(sys.argv[1:], 'hs:b:e:g:c:',
+                                   ['help', 'data_source_dir=', 'begin=', 'end=', 'granularities=', 'config='])
     except getopt.GetoptError as e:
         print str(e)
         usage()
@@ -61,8 +62,15 @@ def incept_config():
         elif k in ("-g", "--granularities"):
             _config['granularities'] = v
 
+        elif k in ("-c", "--config"):
+            _config['config_file'] = v
+
         else:
             print "unhandled option"
+
+    if 'config_file' in _config:
+        with open(_config['config_file'], 'r') as f:
+            _config.update(json.load(f))
 
     if 'data_source_dir' not in _config:
         print 'Must specify the -s(data_source_dir) arguments.'
@@ -271,4 +279,5 @@ def test():
 
     pass
 
-# test()
+
+test()
