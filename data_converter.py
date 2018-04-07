@@ -6,6 +6,7 @@ import os
 import sys
 import getopt
 import json
+from datetime import datetime
 import time
 import re
 
@@ -123,6 +124,7 @@ class DateConverter(object):
         self.interval = 60
         self.last_ts_step = None
         self.name = None
+        self.is_tick = None
 
     def data_pump(self, depth_market_data=None, save_dir_path=None):
         """
@@ -136,11 +138,31 @@ class DateConverter(object):
 
         trading_day = depth_market_data['trading_day']
         update_time = depth_market_data['update_time']
-        date_time = ' '.join([depth_market_data['trading_day'], depth_market_data['update_time']])
-        # ts_step = int(time.mktime(time.strptime(date_time, "%Y%m%d %H:%M:%S"))) / self.interval
-        ts_step = int(time.mktime((int(trading_day[:4]), int(trading_day[4:6]), int(trading_day[6:]),
-                                   int(update_time[:2]), int(update_time[3:5]), int(update_time[6:]),
-                                   0, 0, 0))) / self.interval
+
+        origin_date_time = ' '.join([trading_day, update_time])
+
+        if self.is_tick is None:
+            if update_time.find('.') != -1:
+                self.is_tick = True
+
+            else:
+                self.is_tick = False
+
+        if self.is_tick:
+            dt = datetime.strptime(origin_date_time, "%Y%m%d %H:%M:%S.%f")
+            ts = time.mktime(dt.timetuple()) + (dt.microsecond / 1e6)
+            ts -= 0.1
+
+        else:
+            ts = int(time.mktime(time.strptime(origin_date_time, "%Y%m%d %H:%M:%S")))
+            # ts = int(time.mktime((int(trading_day[:4]), int(trading_day[4:6]), int(trading_day[6:]),
+            #                       int(update_time[:2]), int(update_time[3:5]), int(update_time[6:8]),
+            #                       0, 0, 0)))
+
+        ts += self.interval
+        ts_step = int(ts) / self.interval
+
+        date_time = time.strftime("%Y%m%d %H:%M:%S", time.localtime(ts))
 
         if self.last_ts_step is None:
             self.last_ts_step = ts_step
@@ -185,7 +207,16 @@ class DateConverter(object):
 
 
 def trading_time_filter(date_time=None, contract_code=None, exchange_trading_period_by_ts=None):
-    ts = int(time.mktime(time.strptime(date_time, "%Y-%m-%d %H:%M:%S")))
+    is_tick = False
+    if date_time.find('.') != -1:
+        is_tick = True
+
+    if is_tick:
+        dt = datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S.%f")
+        ts = time.mktime(dt.timetuple()) + (dt.microsecond / 1e6)
+    else:
+        ts = int(time.mktime(time.strptime(date_time, "%Y-%m-%d %H:%M:%S")))
+
     contract_trading_period_ts = list()
 
     for trading_period in FUTURES_TRADING_PERIOD_MAPPING[contract_code]:
@@ -234,13 +265,19 @@ def run():
                 else:
                     config['is_tick'] = False
 
-            if row[0].find('.') != -1:
-                row[0] = row[0].split('.')[0]
-
             if config['offset'] > 0:
-                ts = int(time.mktime(time.strptime(row[0], "%Y-%m-%d %H:%M:%S")))
+                if config['is_tick']:
+                    dt = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
+                    ts = time.mktime(dt.timetuple()) + (dt.microsecond / 1e6)
+                else:
+                    ts = int(time.mktime(time.strptime(row[0], "%Y-%m-%d %H:%M:%S")))
+
                 ts += config['offset']
-                row[0] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+
+                if config['is_tick']:
+                    row[0] = datetime.strftime(datetime.fromtimestamp(ts), "%Y-%m-%d %H:%M:%S.%f")
+                else:
+                    row[0] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
 
             date_time = row[0].split(' ')
 
