@@ -27,7 +27,8 @@ contract_code_pattern = re.compile(r'\D*')
 
 def incept_config():
     _config = {
-        'granularities': '2,5,10,30,60'
+        'granularities': '2,5,10,30,60',
+        'config_file': './data_sewing_machine.config'
     }
 
     def usage():
