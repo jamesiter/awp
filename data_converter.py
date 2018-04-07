@@ -201,6 +201,7 @@ def trading_time_filter(date_time=None, contract_code=None, exchange_trading_per
 
 def run():
     config = incept_config()
+    config['is_tick'] = None
     workdays = TradingPeriod.get_workdays(begin=config['begin'], end=config['end'])
     workdays_exchange_trading_period_by_ts = \
         TradingPeriod.get_workdays_exchange_trading_period(
@@ -226,6 +227,13 @@ def run():
 
             row[0] = row[0].replace('/', '-')
 
+            if config['is_tick'] is None:
+                if row[0].find('.') != -1:
+                    config['is_tick'] = True
+
+                else:
+                    config['is_tick'] = False
+
             if row[0].find('.') != -1:
                 row[0] = row[0].split('.')[0]
 
@@ -247,11 +255,17 @@ def run():
             depth_market_data['trading_day'] = ''.join(date_time[0].split('-'))
             depth_market_data['update_time'] = date_time[1]
 
-            if row[4].isdigit():
-                depth_market_data['last_price'] = int(row[4])
+            if config['is_tick']:
+                depth_market_data['last_price'] = row[1]
+
+            else:
+                depth_market_data['last_price'] = row[4]
+
+            if depth_market_data['last_price'].isdigit():
+                depth_market_data['last_price'] = int(depth_market_data['last_price'])
             else:
                 try:
-                    depth_market_data['last_price'] = float(row[4])
+                    depth_market_data['last_price'] = float(depth_market_data['last_price'])
                 except ValueError:
                     continue
 
