@@ -162,8 +162,6 @@ class DateConverter(object):
         ts += self.interval
         ts_step = int(ts) / self.interval
 
-        date_time = time.strftime("%Y%m%d %H:%M:%S", time.localtime(ts))
-
         if self.last_ts_step is None:
             self.last_ts_step = ts_step
 
@@ -191,7 +189,7 @@ class DateConverter(object):
                 'high': last_price,
                 'low': last_price,
                 'close': last_price,
-                'date_time': date_time
+                'date_time': time.strftime("%Y%m%d %H:%M:%S", time.localtime(ts_step * self.interval))
             }
 
         self.k_line['close'] = last_price
@@ -246,6 +244,8 @@ def run():
         date_converter.interval = 60 * granularity
         date_converters.append(date_converter)
 
+    lines = list()
+
     with open(config['data_source']) as f:
         for i, line in enumerate(f):
 
@@ -253,61 +253,68 @@ def run():
             if i == 0:
                 continue
 
-            depth_market_data = dict()
-            row = line.split(',')
+            lines.append(line)
 
-            row[0] = row[0].replace('/', '-')
+    for i, line in enumerate(lines):
 
-            if config['is_tick'] is None:
-                if row[0].find('.') != -1:
-                    config['is_tick'] = True
+        if i % 10000 == 0:
+            print ' '.join([time.strftime('%H:%M:%S'), i.__str__()])
 
-                else:
-                    config['is_tick'] = False
+        depth_market_data = dict()
+        row = line.split(',')
 
-            if config['offset'] > 0:
-                if config['is_tick']:
-                    dt = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
-                    ts = time.mktime(dt.timetuple()) + (dt.microsecond / 1e6)
-                else:
-                    ts = int(time.mktime(time.strptime(row[0], "%Y-%m-%d %H:%M:%S")))
+        row[0] = row[0].replace('/', '-')
 
-                ts += config['offset']
+        if config['is_tick'] is None:
+            if row[0].find('.') != -1:
+                config['is_tick'] = True
 
-                if config['is_tick']:
-                    row[0] = datetime.strftime(datetime.fromtimestamp(ts), "%Y-%m-%d %H:%M:%S.%f")
-                else:
-                    row[0] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+            else:
+                config['is_tick'] = False
 
-            date_time = row[0].split(' ')
+        if config['offset'] > 0:
+            if config['is_tick']:
+                dt = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
+                ts = time.mktime(dt.timetuple()) + (dt.microsecond / 1e6)
+            else:
+                ts = int(time.mktime(time.strptime(row[0], "%Y-%m-%d %H:%M:%S")))
 
-            if date_time[0] not in workdays_exchange_trading_period_by_ts:
-                continue
-
-            if not trading_time_filter(
-                    date_time=row[0], contract_code=config['contract_code'],
-                    exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[date_time[0]]):
-                continue
-
-            depth_market_data['trading_day'] = ''.join(date_time[0].split('-'))
-            depth_market_data['update_time'] = date_time[1]
+            ts += config['offset']
 
             if config['is_tick']:
-                depth_market_data['last_price'] = row[1]
-
+                row[0] = datetime.strftime(datetime.fromtimestamp(ts), "%Y-%m-%d %H:%M:%S.%f")
             else:
-                depth_market_data['last_price'] = row[4]
+                row[0] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
 
-            if depth_market_data['last_price'].isdigit():
-                depth_market_data['last_price'] = int(depth_market_data['last_price'])
-            else:
-                try:
-                    depth_market_data['last_price'] = float(depth_market_data['last_price'])
-                except ValueError:
-                    continue
+        date_time = row[0].split(' ')
 
-            for date_converter in date_converters:
-                date_converter.data_pump(depth_market_data=depth_market_data, save_dir_path=config['output_dir'])
+        if date_time[0] not in workdays_exchange_trading_period_by_ts:
+            continue
+
+        if not trading_time_filter(
+                date_time=row[0], contract_code=config['contract_code'],
+                exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[date_time[0]]):
+            continue
+
+        depth_market_data['trading_day'] = ''.join(date_time[0].split('-'))
+        depth_market_data['update_time'] = date_time[1]
+
+        if config['is_tick']:
+            depth_market_data['last_price'] = row[1]
+
+        else:
+            depth_market_data['last_price'] = row[4]
+
+        if depth_market_data['last_price'].isdigit():
+            depth_market_data['last_price'] = int(depth_market_data['last_price'])
+        else:
+            try:
+                depth_market_data['last_price'] = float(depth_market_data['last_price'])
+            except ValueError:
+                continue
+
+        for date_converter in date_converters:
+            date_converter.data_pump(depth_market_data=depth_market_data, save_dir_path=config['output_dir'])
 
 
 if __name__ == '__main__':
