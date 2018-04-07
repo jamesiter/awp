@@ -124,7 +124,12 @@ class DateConverter(object):
         self.interval = 60
         self.last_ts_step = None
         self.name = None
+        self.save_path = None
         self.is_tick = None
+
+    def save_last(self):
+        with open(self.save_path, 'a') as f:
+            f.writelines(json.dumps(self.k_line, ensure_ascii=False) + '\n')
 
     def data_pump(self, depth_market_data=None, save_dir_path=None):
         """
@@ -170,12 +175,12 @@ class DateConverter(object):
 
             if save_dir_path is not None:
                 file_name = '_'.join([self.name, self.interval.__str__()]) + '.json'
-                save_path = '/'.join([save_dir_path, file_name])
+                self.save_path = '/'.join([save_dir_path, file_name])
 
                 if not os.path.isdir(save_dir_path):
                     os.makedirs(save_dir_path, 0755)
 
-                with open(save_path, 'a') as f:
+                with open(self.save_path, 'a') as f:
                     f.writelines(json.dumps(self.k_line, ensure_ascii=False) + '\n')
 
             self.last_ts_step = ts_step
@@ -315,6 +320,9 @@ def run():
 
         for date_converter in date_converters:
             date_converter.data_pump(depth_market_data=depth_market_data, save_dir_path=config['output_dir'])
+
+    for date_converter in date_converters:
+        date_converter.save_last()
 
 
 if __name__ == '__main__':
