@@ -226,6 +226,9 @@ def run():
 
             row[0] = row[0].replace('/', '-')
 
+            if row[0].find('.') != -1:
+                row[0] = row[0].split('.')[0]
+
             if config['offset'] > 0:
                 ts = int(time.mktime(time.strptime(row[0], "%Y-%m-%d %H:%M:%S")))
                 ts += config['offset']
