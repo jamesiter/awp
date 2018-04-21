@@ -10,6 +10,7 @@ import time
 import re
 
 from k_line_pump import KLinePump
+from ma_pump import MAPump
 from data_converter import trading_time_filter
 from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD, HOLIDAYS
 
@@ -28,6 +29,7 @@ contract_code_pattern = re.compile(r'\D*')
 def incept_config():
     _config = {
         'granularities': '2,5,10,30,60',
+        'ma_steps': '2,5,10',
         'config_file': './data_sewing_machine.config'
     }
 
@@ -39,8 +41,9 @@ def incept_config():
 
     opts = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hs:b:e:g:c:',
-                                   ['help', 'data_source_dir=', 'begin=', 'end=', 'granularities=', 'config='])
+        opts, args = getopt.getopt(sys.argv[1:], 'hs:b:e:g:c:m:',
+                                   ['help', 'data_source_dir=', 'begin=', 'end=', 'granularities=', 'config=',
+                                    'ma_steps='])
     except getopt.GetoptError as e:
         print str(e)
         usage()
@@ -65,6 +68,9 @@ def incept_config():
 
         elif k in ("-c", "--config"):
             _config['config_file'] = v
+
+        elif k in ("-m", "--ma_steps"):
+            _config['ma_steps'] = v
 
         else:
             print "unhandled option"
@@ -102,6 +108,24 @@ def incept_config():
 
         _config['granularities'].append(granularity)
 
+    for ma_step in _config['ma_steps'].split(','):
+
+        if not isinstance(_config['ma_steps'], list):
+            _config['ma_steps'] = list()
+
+        # 忽略非整数的粒度
+        if not ma_step.isdigit():
+            continue
+
+        else:
+            ma_step = int(ma_step)
+
+        # 粒度小于 2，或大于 100 的不予支持
+        if 2 > ma_step > 100:
+            continue
+
+        _config['ma_steps'].append(ma_step)
+
     return _config
 
 
@@ -119,15 +143,28 @@ def load_data_from_file():
             if fields[1] not in DEPOSITARY_OF_KLINE[fields[0]]:
                 DEPOSITARY_OF_KLINE[fields[0]][fields[1]] = {
                     'path': os.path.join(config['data_source_dir'], file_name),
-                    'data': list()
+                    'data': list(),
+                    'MA': dict()
                 }
+
+                for step in config['ma_steps']:
+                    str_step = step.__str__()
+                    if str_step not in DEPOSITARY_OF_KLINE[fields[0]][fields[1]]['MA']:
+                        DEPOSITARY_OF_KLINE[fields[0]][fields[1]]['MA'][str_step] = dict()
+                        DEPOSITARY_OF_KLINE[fields[0]][fields[1]]['MA'][str_step]['pump'] = MAPump(step=step)
+                        DEPOSITARY_OF_KLINE[fields[0]][fields[1]]['MA'][str_step]['data'] = list()
 
     for k, v in DEPOSITARY_OF_KLINE.items():
 
         for _k, _v in v.items():
             with open(_v['path'], 'r') as f:
                 for line in f:
-                    DEPOSITARY_OF_KLINE[k][_k]['data'].append(json.loads(line.strip()))
+                    json_line = json.loads(line.strip())
+                    DEPOSITARY_OF_KLINE[k][_k]['data'].append(json_line)
+
+                    for ma_k, ma_v in _v['MA'].items():
+                        ma_ret = DEPOSITARY_OF_KLINE[k][_k]['MA'][ma_k]['pump'].process_data(json_line['close'])
+                        DEPOSITARY_OF_KLINE[k][_k]['MA'][ma_k]['data'].append(ma_ret)
 
 
 def init_k_line_pump():
@@ -204,10 +241,14 @@ def sewing_data_to_file_and_depositary(depth_market_data=None):
             depth_market_data=formatted_depth_market_data, save_path=DEPOSITARY_OF_KLINE[instrument_id][k]['path'])
 
         if DEPOSITARY_OF_KLINE[instrument_id][k]['k_line_pump'].str_k_line is not None:
-            DEPOSITARY_OF_KLINE[instrument_id][k]['data'].append(
-                json.loads(DEPOSITARY_OF_KLINE[instrument_id][k]['k_line_pump'].str_k_line))
+            json_k_line = json.loads(DEPOSITARY_OF_KLINE[instrument_id][k]['k_line_pump'].str_k_line)
+            DEPOSITARY_OF_KLINE[instrument_id][k]['data'].append(json_k_line)
 
             DEPOSITARY_OF_KLINE[instrument_id][k]['k_line_pump'].str_k_line = None
+
+            for ma_k, ma_v in DEPOSITARY_OF_KLINE[instrument_id][k]['MA'].items():
+                ma_ret = DEPOSITARY_OF_KLINE[instrument_id][k]['MA'][ma_k]['pump'].process_data(json_k_line['close'])
+                DEPOSITARY_OF_KLINE[instrument_id][k]['MA'][ma_k]['data'].append(ma_ret)
 
 
 def get_k_line_column(instrument_id=None, interval=None, ohlc='high', depth=0):
