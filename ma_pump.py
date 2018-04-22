@@ -14,20 +14,26 @@ class MAPump(object):
         self.step = step
         self.numbers = list()
 
-    def process_data(self, number=None):
+    def process_data(self, k_line=None, field='close'):
         """
-        :param number:
+        :param k_line:
+        :param field:
         :return:
         """
 
+        assert isinstance(k_line, dict)
+
+        number = k_line[field]
         assert isinstance(number, (int, float))
+
+        date_time = k_line['date_time']
 
         self.numbers.append(number)
 
         if self.numbers.__len__() < self.step:
-            return float(sum(self.numbers)) / self.numbers.__len__()
+            return {'date_time': date_time, 'avg': float(sum(self.numbers)) / self.numbers.__len__()}
 
         else:
             self.numbers = self.numbers[0 - self.step:]
-            return float(sum(self.numbers)) / self.numbers.__len__()
+            return {'date_time': date_time, 'avg': float(sum(self.numbers)) / self.numbers.__len__()}
 
