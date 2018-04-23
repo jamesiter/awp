@@ -223,6 +223,12 @@ def trading_time_filter(date_time=None, contract_code=None, exchange_trading_per
     contract_trading_period_ts = list()
 
     for trading_period in FUTURES_TRADING_PERIOD_MAPPING[contract_code]:
+        if trading_period.exchange_code not in exchange_trading_period_by_ts:
+            continue
+
+        if trading_period.period not in exchange_trading_period_by_ts[trading_period.exchange_code]:
+            continue
+
         contract_trading_period_ts.extend(
             exchange_trading_period_by_ts[trading_period.exchange_code][trading_period.period])
 

@@ -3,8 +3,10 @@
 
 
 import sys
-import time
 from copy import deepcopy
+from data_sewing_machine import sewing_data_to_file_and_depositary, incept_config, load_data_from_file
+from data_sewing_machine import init_k_line_pump, get_k_line_column, DEPOSITARY_OF_KLINE
+from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD
 
 import Queue
 
@@ -86,6 +88,7 @@ def login():
     while True:
         try:
             payload = q_depth_market_data.get(timeout=1)
+            sewing_data_to_file_and_depositary(depth_market_data=payload)
             q_depth_market_data.task_done()
             print payload
 
@@ -95,6 +98,15 @@ def login():
 
 
 if __name__ == "__main__":
+    config = incept_config()
+    load_data_from_file()
+    init_k_line_pump()
+
+    workdays = TradingPeriod.get_workdays(begin=config['begin'], end=config['end'])
+    workdays_exchange_trading_period_by_ts = \
+        TradingPeriod.get_workdays_exchange_trading_period(
+            _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
+
     login()
 
 
