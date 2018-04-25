@@ -106,14 +106,18 @@ def run():
                 if not up_trader_flag and payload.LastPrice > last_k_line['high']:
                     # 下多单
                     up_trader_flag = True
-                    pass
+                    print
+                    print u'下多单'
+                    print last_k_line
+                    print payload.LastPrice
 
                 if not down_trader_flag and payload.LastPrice < last_k_line['low']:
                     # 下空单
                     down_trader_flag = True
-                    pass
-
-                print payload.LastPrice
+                    print
+                    print u'下空单'
+                    print last_k_line
+                    print payload.LastPrice
 
         except Queue.Empty as e:
             pass
