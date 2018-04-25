@@ -6,7 +6,7 @@ import sys
 import threading
 from copy import deepcopy
 from data_sewing_machine import sewing_data_to_file_and_depositary, incept_config, load_data_from_file
-from data_sewing_machine import init_k_line_pump, get_k_line_column, DEPOSITARY_OF_KLINE, q_macs
+from data_sewing_machine import init_k_line_pump, get_k_line_column, DEPOSITARY_OF_KLINE, q_macs, get_last_k_line
 from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD
 
 import Queue
@@ -19,7 +19,7 @@ elif sys.platform == 'linux2':
 
 
 __author__ = 'James Iter'
-__date__ = '2018/4/22'
+__date__ = '2018/4/25'
 __contact__ = 'james.iter.cn@gmail.com'
 __copyright__ = '(c) 2018 by James Iter.'
 
@@ -78,7 +78,7 @@ class MyMdApi(MdApi):
         q_depth_market_data.put(deepcopy(depth_market_data))
 
 
-def login():
+def run():
     # 登录行情服务器
     user = MyMdApi(instruments=inst, broker_id=BROKER_ID, investor_id=INVESTOR_ID, password=PASSWORD)
     user.Create("data")
@@ -86,11 +86,34 @@ def login():
     user.Init()
     print u'行情服务器登录成功'
 
+    last_time = None
+    up_trader_flag = False
+    down_trader_flag = False
+
     while True:
         try:
             payload = q_depth_market_data.get(timeout=1)
             sewing_data_to_file_and_depositary(depth_market_data=payload)
-            q_depth_market_data.task_done()
+
+            last_k_line = get_last_k_line(instrument_id=inst[0], interval=60)
+
+            if last_k_line is not None:
+                if last_time != last_k_line['date_time']:
+                    last_time = last_k_line['date_time']
+                    up_trader_flag = False
+                    down_trader_flag = False
+
+                if not up_trader_flag and payload.LastPrice > last_k_line['high']:
+                    # 下多单
+                    up_trader_flag = True
+                    pass
+
+                if not down_trader_flag and payload.LastPrice < last_k_line['low']:
+                    # 下空单
+                    down_trader_flag = True
+                    pass
+
+                print payload.LastPrice
 
         except Queue.Empty as e:
             pass
@@ -100,7 +123,7 @@ def macs_process():
     while True:
         try:
             payload = q_macs.get(timeout=1)
-            print payload
+            # print payload
 
         except Queue.Empty as e:
             pass
@@ -121,6 +144,6 @@ if __name__ == "__main__":
         TradingPeriod.get_workdays_exchange_trading_period(
             _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
 
-    login()
+    run()
 
 

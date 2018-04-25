@@ -8,6 +8,7 @@ import getopt
 import json
 import time
 import re
+import Queue
 
 from k_line_pump import KLinePump
 from ma_pump import MAPump
@@ -24,11 +25,12 @@ __copyright__ = '(c) 2018 by James Iter.'
 DEPOSITARY_OF_KLINE = dict()
 instrument_id_interval_pattern = re.compile(r'(\D*\d+)_(\d+)\.json')
 contract_code_pattern = re.compile(r'\D*')
+q_macs = Queue.Queue()
 
 
 def incept_config():
     _config = {
-        'granularities': '2,5,10,30,60',
+        'granularities': '1,2,5,10,30,60',
         'ma_steps': '2,5,10',
         'macs': '2c5,5c10',
         'config_file': './data_sewing_machine.config'
@@ -106,8 +108,8 @@ def incept_config():
         else:
             granularity = int(granularity)
 
-        # 粒度小于 2 分钟，或大于 3600 分钟的不予支持
-        if 2 > granularity > 3600:
+        # 粒度小于 1 分钟，或大于 3600 分钟的不予支持
+        if 1 > granularity > 3600:
             continue
 
         _config['granularities'].append(granularity)
@@ -216,6 +218,7 @@ def load_data_from_file():
                             data['up_crossing'] = None
 
                         DEPOSITARY_OF_KLINE[k][_k]['MAC'][mac_k]['data'].append(data)
+                        q_macs.put({'instrument_id': k, 'granularity': _k, 'mac_k': mac_k, 'data': data})
 
 
 def init_k_line_pump():
@@ -249,10 +252,12 @@ def sewing_data_to_file_and_depositary(depth_market_data=None):
 
     date_time = ' '.join([date, depth_market_data.UpdateTime])
 
+    """
     if not trading_time_filter(
             date_time=date_time, contract_code=contract_code,
             exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[date]):
         return
+    """
 
     formatted_depth_market_data = dict()
     formatted_depth_market_data['trading_day'] = date.replace('-', '')
@@ -311,9 +316,16 @@ def sewing_data_to_file_and_depositary(depth_market_data=None):
                 ma_ret = DEPOSITARY_OF_KLINE[instrument_id][k]['MA'][ma_k]['pump'].process_data(json_k_line)
                 DEPOSITARY_OF_KLINE[instrument_id][k]['MA'][ma_k]['data'].append(ma_ret)
 
+            if 'MAC' not in DEPOSITARY_OF_KLINE[instrument_id][k]:
+                DEPOSITARY_OF_KLINE[instrument_id][k]['MAC'] = dict()
+
+                for mac in config['macs']:
+                    if mac not in DEPOSITARY_OF_KLINE[instrument_id][k]['MAC']:
+                        DEPOSITARY_OF_KLINE[instrument_id][k]['MAC'][mac] = dict()
+                        DEPOSITARY_OF_KLINE[instrument_id][k]['MAC'][mac]['data'] = list()
+
             for mac_k, mac_v in DEPOSITARY_OF_KLINE[instrument_id][k]['MAC'].items():
                 mac = mac_k.lower().split('c')
-                last_mac = DEPOSITARY_OF_KLINE[instrument_id][k]['MAC'][mac_k]['data'][-1]
 
                 data = {
                     'date_time': DEPOSITARY_OF_KLINE[instrument_id][k]['MA'][mac[0]]['data'][-1]['date_time'],
@@ -344,7 +356,8 @@ def sewing_data_to_file_and_depositary(depth_market_data=None):
                         last_mac['up_crossing'] == data['up_crossing']:
                     data['up_crossing'] = None
 
-                    DEPOSITARY_OF_KLINE[instrument_id][k]['MAC'][mac_k]['data'].append(data)
+                DEPOSITARY_OF_KLINE[instrument_id][k]['MAC'][mac_k]['data'].append(data)
+                q_macs.put({'instrument_id': instrument_id, 'granularity': k, 'mac_k': mac_k, 'data': data})
 
 
 def get_k_line_column(instrument_id=None, interval=None, ohlc='high', depth=0):
@@ -372,6 +385,20 @@ def get_k_line_column(instrument_id=None, interval=None, ohlc='high', depth=0):
         k_line_column.append(DEPOSITARY_OF_KLINE[instrument_id][str_interval]['data'][i][ohlc])
 
     return k_line_column
+
+
+def get_last_k_line(instrument_id=None, interval=None):
+    """
+    :param instrument_id: 合约名称。
+    :param interval: 取样间隔。
+    :return: dict。
+    """
+
+    str_interval = str(interval)
+    if 1 > DEPOSITARY_OF_KLINE[instrument_id][str_interval]['data'].__len__():
+        return None
+
+    return DEPOSITARY_OF_KLINE[instrument_id][str_interval]['data'][-1]
 
 
 def test():
