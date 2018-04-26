@@ -24,7 +24,7 @@ __contact__ = 'james.iter.cn@gmail.com'
 __copyright__ = '(c) 2018 by James Iter.'
 
 
-inst = [u'rb1805']
+inst = [u'AP810']
 BROKER_ID = '9999'
 INVESTOR_ID = '116667'
 PASSWORD = '110.com'
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     t.start()
 
     config = incept_config()
-    load_data_from_file()
+    load_data_from_file(instruments_id='rb1805,AP810', granularities='1,2,5')
     init_k_line_pump()
 
     workdays = TradingPeriod.get_workdays(begin=config['begin'], end=config['end'])

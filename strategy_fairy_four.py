@@ -140,7 +140,8 @@ if __name__ == "__main__":
     t.start()
 
     config = incept_config()
-    load_data_from_file()
+    # load_data_from_file()
+    load_data_from_file(instruments_id='rb1805,AP810', granularities='1,2,5')
     init_k_line_pump()
 
     workdays = TradingPeriod.get_workdays(begin=config['begin'], end=config['end'])

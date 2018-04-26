@@ -142,9 +142,24 @@ def incept_config():
     return _config
 
 
-def load_data_from_file():
+def load_data_from_file(instruments_id=None, granularities=None):
 
-    for file_name in os.listdir(config['data_source_dir']):
+    files_name = list()
+
+    if instruments_id is not None and granularities is not None:
+        for instrument_id in instruments_id.split(','):
+            for granularity in granularities.split(','):
+
+                file_name = '_'.join([instrument_id, (60 * int(granularity)).__str__()]) + '.json'
+
+                if os.path.isfile(os.path.join(config['data_source_dir'], file_name)):
+                    files_name.append(file_name)
+
+    else:
+        for file_name in os.listdir(config['data_source_dir']):
+            files_name.append(file_name)
+
+    for file_name in files_name:
         p = instrument_id_interval_pattern.match(file_name)
 
         if p is not None:
@@ -230,13 +245,13 @@ def init_k_line_pump():
 
 
 config = incept_config()
-load_data_from_file()
-init_k_line_pump()
+# load_data_from_file(instruments_id='rb1805', granularities='1,2,5')
+# init_k_line_pump()
 
-workdays = TradingPeriod.get_workdays(begin=config['begin'], end=config['end'])
-workdays_exchange_trading_period_by_ts = \
-    TradingPeriod.get_workdays_exchange_trading_period(
-        _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
+# workdays = TradingPeriod.get_workdays(begin=config['begin'], end=config['end'])
+# workdays_exchange_trading_period_by_ts = \
+#     TradingPeriod.get_workdays_exchange_trading_period(
+#         _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
 
 
 def sewing_data_to_file_and_depositary(depth_market_data=None):
