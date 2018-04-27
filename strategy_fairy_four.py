@@ -7,6 +7,7 @@ import threading
 from copy import deepcopy
 from data_sewing_machine import sewing_data_to_file_and_depositary, incept_config, load_data_from_file
 from data_sewing_machine import init_k_line_pump, get_k_line_column, DEPOSITARY_OF_KLINE, q_macs, get_last_k_line
+from data_sewing_machine import get_mac
 from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD
 
 import Queue
@@ -118,6 +119,8 @@ def run():
                     print u'下空单'
                     print last_k_line
                     print payload.LastPrice
+
+                print get_mac(instrument_id='rb1805', interval='120', mac='2c5')
 
         except Queue.Empty as e:
             pass

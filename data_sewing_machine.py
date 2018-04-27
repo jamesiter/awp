@@ -416,6 +416,23 @@ def get_last_k_line(instrument_id=None, interval=None):
     return DEPOSITARY_OF_KLINE[instrument_id][str_interval]['data'][-1]
 
 
+def get_mac(instrument_id=None, interval=None, mac=None):
+
+    if instrument_id not in DEPOSITARY_OF_KLINE:
+        return None
+
+    if interval not in DEPOSITARY_OF_KLINE[instrument_id]:
+        return None
+
+    if 'MAC' not in DEPOSITARY_OF_KLINE[instrument_id][interval]:
+        return None
+
+    if mac not in DEPOSITARY_OF_KLINE[instrument_id][interval]['MAC']:
+        return None
+
+    return DEPOSITARY_OF_KLINE[instrument_id][interval]['MAC'][mac]['data']
+
+
 def test():
     from collections import namedtuple
 
