@@ -433,6 +433,44 @@ def get_mac(instrument_id=None, interval=None, mac=None):
     return DEPOSITARY_OF_KLINE[instrument_id][interval]['MAC'][mac]['data']
 
 
+def hhv(series=None, step=None):
+
+    assert isinstance(series, list)
+    assert 0 < step < series.__len__()
+
+    numbers = list()
+    stack = list()
+
+    for number in series:
+        stack.append(number)
+
+        if stack.__len__() > step:
+            stack = stack[0 - step:]
+
+        numbers.append(max(stack))
+
+    return numbers
+
+
+def llv(series=None, step=None):
+
+    assert isinstance(series, list)
+    assert 0 < step < series.__len__()
+
+    numbers = list()
+    stack = list()
+
+    for number in series:
+        stack.append(number)
+
+        if stack.__len__() > step:
+            stack = stack[0 - step:]
+
+        numbers.append(min(stack))
+
+    return numbers
+
+
 def test():
     from collections import namedtuple
 

@@ -6,7 +6,7 @@ import sys
 import threading
 from copy import deepcopy
 from data_sewing_machine import sewing_data_to_file_and_depositary, incept_config, load_data_from_file
-from data_sewing_machine import init_k_line_pump, get_k_line_column, DEPOSITARY_OF_KLINE, q_macs
+from data_sewing_machine import init_k_line_pump, get_k_line_column, DEPOSITARY_OF_KLINE, q_macs, hhv, llv
 from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD
 
 import Queue
@@ -91,6 +91,9 @@ def login():
             payload = q_depth_market_data.get(timeout=1)
             sewing_data_to_file_and_depositary(depth_market_data=payload)
             q_depth_market_data.task_done()
+            c = get_k_line_column(instrument_id='rb1805', interval=60, depth=10)
+            h = hhv(c, step=5)
+            l = llv(c, step=5)
 
         except Queue.Empty as e:
             pass
