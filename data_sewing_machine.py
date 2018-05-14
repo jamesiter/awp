@@ -436,7 +436,7 @@ def get_mac(instrument_id=None, interval=None, mac=None):
 def hhv(series=None, step=None):
 
     assert isinstance(series, list)
-    assert 0 < step < series.__len__()
+    assert 0 < step <= series.__len__()
 
     numbers = list()
     stack = list()
@@ -455,7 +455,7 @@ def hhv(series=None, step=None):
 def llv(series=None, step=None):
 
     assert isinstance(series, list)
-    assert 0 < step < series.__len__()
+    assert 0 < step <= series.__len__()
 
     numbers = list()
     stack = list()

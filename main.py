@@ -92,8 +92,9 @@ def login():
             sewing_data_to_file_and_depositary(depth_market_data=payload)
             q_depth_market_data.task_done()
             c = get_k_line_column(instrument_id='rb1805', interval=60, depth=10)
-            h = hhv(c, step=5)
-            l = llv(c, step=5)
+            h = hhv(c, step=10)
+            l = llv(c, step=10)
+            pass
 
         except Queue.Empty as e:
             pass
