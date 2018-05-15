@@ -471,6 +471,44 @@ def llv(series=None, step=None):
     return numbers
 
 
+def cross_up(series_a=None, series_b=None):
+
+    assert isinstance(series_a, list)
+    assert isinstance(series_b, list)
+    assert series_a.__len__() == series_b.__len__()
+
+    cross_series = list()
+
+    for i, v in enumerate(series_a):
+        if i > 0:
+            if series_a[i] > series_b[i] and series_a[i - 1] <= series_b[i - 1]:
+                cross_series.append(True)
+                continue
+
+        cross_series.append(None)
+
+    return cross_series
+
+
+def cross_down(series_a=None, series_b=None):
+
+    assert isinstance(series_a, list)
+    assert isinstance(series_b, list)
+    assert series_a.__len__() == series_b.__len__()
+
+    cross_series = list()
+
+    for i, v in enumerate(series_a):
+        if i > 0:
+            if series_a[i] < series_b[i] and series_a[i - 1] >= series_b[i - 1]:
+                cross_series.append(True)
+                continue
+
+        cross_series.append(None)
+
+    return cross_series
+
+
 def test():
     from collections import namedtuple
 
