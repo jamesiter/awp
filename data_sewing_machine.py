@@ -284,7 +284,7 @@ def sewing_data_to_file_and_depositary(depth_market_data=None):
             formatted_depth_market_data['last_price'] = int(depth_market_data.LastPrice)
         else:
             try:
-                formatted_depth_market_data['last_price'] = float(depth_market_data.LastPrice)
+                formatted_depth_market_data['last_price'] = float('%0.2f' % float(depth_market_data.LastPrice))
             except ValueError:
                 return
 

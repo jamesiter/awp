@@ -320,7 +320,7 @@ def run():
             depth_market_data['last_price'] = int(depth_market_data['last_price'])
         else:
             try:
-                depth_market_data['last_price'] = float(depth_market_data['last_price'])
+                depth_market_data['last_price'] = float('%0.2f' % float(depth_market_data['last_price']))
             except ValueError:
                 continue
 

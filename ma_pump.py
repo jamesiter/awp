@@ -31,9 +31,9 @@ class MAPump(object):
         self.numbers.append(number)
 
         if self.numbers.__len__() < self.step:
-            return {'date_time': date_time, 'avg': float(sum(self.numbers)) / self.numbers.__len__()}
+            return {'date_time': date_time, 'avg': float('%0.2f' % (float(sum(self.numbers)) / self.numbers.__len__()))}
 
         else:
             self.numbers = self.numbers[0 - self.step:]
-            return {'date_time': date_time, 'avg': float(sum(self.numbers)) / self.numbers.__len__()}
+            return {'date_time': date_time, 'avg': float('%0.2f' % (float(sum(self.numbers)) / self.numbers.__len__()))}
 
