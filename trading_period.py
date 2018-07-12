@@ -206,31 +206,31 @@ FUTURES_TRADING_PERIOD_MAPPING = {
 
     # 上期所
     "ag": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_01')],  # 白银1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_01')],  # 白银1709
     "au": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_01')],  # 黄金1710
+           TradingPeriod(exchange_code='SHFE', period='night_group_01')],  # 黄金1710
 
     "pb": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_02')],  # 铅1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_02')],  # 铅1709
     "ni": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_02')],  # 镍1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_02')],  # 镍1709
     "zn": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_02')],  # 锌1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_02')],  # 锌1709
     "al": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_02')],  # 铝1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_02')],  # 铝1709
     "sn": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_02')],  # 锡1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_02')],  # 锡1709
     "cu": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_02')],  # 铜1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_02')],  # 铜1709
 
     "ru": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_03')],  # 天然橡胶1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_03')],  # 天然橡胶1709
     "rb": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_03')],  # 螺纹钢1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_03')],  # 螺纹钢1709
     "hc": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_03')],  # 热轧板1709
+           TradingPeriod(exchange_code='SHFE', period='night_group_03')],  # 热轧板1709
     "bu": [TradingPeriod(exchange_code='SHFE', period='daytime'),
-           TradingPeriod('SHFE', period='night_group_03')],  # 沥青1809
+           TradingPeriod(exchange_code='SHFE', period='night_group_03')],  # 沥青1809
 
     "wr": [TradingPeriod(exchange_code='SHFE', period='daytime')],                                       # 线材1709
     "fu": [TradingPeriod(exchange_code='SHFE', period='daytime')],                                       # 燃料油1709
@@ -247,7 +247,8 @@ class TradingPeriod(object):
     def get_workdays(begin=None, end=None):
         _workdays = list()
         the_day_ts = int(time.mktime(time.strptime(begin, '%Y-%m-%d')))
-        end_day_ts = int(time.mktime(time.strptime(end, '%Y-%m-%d')))
+        # 加 86400，表示包含 end_day 当天
+        end_day_ts = int(time.mktime(time.strptime(end, '%Y-%m-%d'))) + 86400
 
         while the_day_ts < end_day_ts:
             the_day_structure_time = time.localtime(the_day_ts)
@@ -326,6 +327,10 @@ class TradingPeriod(object):
         _next_day_exchange_trading_period_by_ts = None
 
         for the_day in _workdays:
+
+            if the_day == '2018-07-13':
+                pass
+
             _workdays_exchange_trading_period_by_ts[the_day], _next_day_exchange_trading_period_by_ts = \
                 cls.get_exchange_trading_period_by_ts(
                     exchange_trading_period=exchange_trading_period, the_day=the_day,
