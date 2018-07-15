@@ -262,17 +262,21 @@ def sewing_data_to_file_and_depositary(depth_market_data=None):
 
     instrument_id = depth_market_data.InstrumentID
     contract_code = contract_code_pattern.match(instrument_id).group()
+
+    workdays = TradingPeriod.get_workdays(begin=config['begin'], end='2019-01-01')
+    workdays_exchange_trading_period_by_ts = \
+        TradingPeriod.get_workdays_exchange_trading_period(
+            _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
+
     date = '-'.join([depth_market_data.TradingDay[:4], depth_market_data.TradingDay[4:6],
                      depth_market_data.TradingDay[6:]])
 
     date_time = ' '.join([date, depth_market_data.UpdateTime])
 
-    """
     if not trading_time_filter(
             date_time=date_time, contract_code=contract_code,
             exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[date]):
         return
-    """
 
     formatted_depth_market_data = dict()
     formatted_depth_market_data['trading_day'] = date.replace('-', '')

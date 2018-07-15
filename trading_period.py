@@ -327,10 +327,6 @@ class TradingPeriod(object):
         _next_day_exchange_trading_period_by_ts = None
 
         for the_day in _workdays:
-
-            if the_day == '2018-07-13':
-                pass
-
             _workdays_exchange_trading_period_by_ts[the_day], _next_day_exchange_trading_period_by_ts = \
                 cls.get_exchange_trading_period_by_ts(
                     exchange_trading_period=exchange_trading_period, the_day=the_day,
