@@ -191,3 +191,5 @@ class DataArrangeEngine(object):
                 logger.error(traceback.format_exc())
                 time.sleep(1)
 
+
+DataArrangeEngine.launch()
