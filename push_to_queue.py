@@ -69,7 +69,8 @@ def incept_config():
     if 'name' not in config:
         config['name'] = os.path.basename(config['data_source']).split('.')[0]
 
-    config['contract_code'] = pattern.match(config['name']).group()
+    # config['contract_code'] = pattern.match(config['name']).group()
+    config['contract_code'] = config['name']
 
     for granularity in config['granularities'].split(','):
 
