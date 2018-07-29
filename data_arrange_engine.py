@@ -67,7 +67,7 @@ class DataArrangeEngine(object):
 
     @classmethod
     def generate_ohlc_index_key(cls):
-        return ':'.join(['Z', cls.contract_code + '_' + cls.granularity])
+        return ':'.join(['Z', cls.contract_code + '_' + cls.granularity.__str__()])
 
     @classmethod
     def generate_ohlc_key(cls):
@@ -76,7 +76,7 @@ class DataArrangeEngine(object):
 
         # 20171017:093600
         time_line = time.strftime("%Y%m%d:%H%M%S", time.localtime(time_line_timestamp))
-        return ':'.join(['H', cls.contract_code + '_' + cls.granularity, time_line])
+        return ':'.join(['H', cls.contract_code + '_' + cls.granularity.__str__(), time_line])
 
     @classmethod
     def generate_ohlc_index(cls):
