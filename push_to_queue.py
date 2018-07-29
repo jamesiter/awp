@@ -10,6 +10,7 @@ import time
 import re
 
 from models import Database as db
+from models.initialize import app, logger
 
 
 __author__ = 'James Iter'
@@ -147,7 +148,7 @@ def run():
             except ValueError:
                 continue
 
-        db.r.rpush(json.dumps(awp_tick, ensure_ascii=False))
+        db.r.rpush(app.config['data_stream_queue'], json.dumps(awp_tick, ensure_ascii=False))
 
 
 if __name__ == '__main__':
