@@ -6,6 +6,7 @@ import time
 import json
 import traceback
 from datetime import datetime
+import decimal
 
 from models import Utils
 from models import Database as db
@@ -116,7 +117,7 @@ class DataArrangeEngine(object):
             db.r.hmset(ohlc_key, ohlc)
             return
 
-        if cls.timestamp <= ohlc['last_timestamp']:
+        if cls.timestamp <= decimal.Decimal(ohlc['last_timestamp']):
             return
 
         ohlc['last_timestamp'] = cls.timestamp
