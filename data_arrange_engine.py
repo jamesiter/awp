@@ -125,10 +125,10 @@ class DataArrangeEngine(object):
 
         ohlc['close'] = cls.last_price
 
-        if cls.last_price > ohlc['high']:
+        if cls.last_price > decimal.Decimal(ohlc['high']):
             ohlc['high'] = cls.last_price
 
-        else:
+        elif cls.last_price < decimal.Decimal(ohlc['low']):
             ohlc['low'] = cls.last_price
 
         db.r.hmset(ohlc_key, ohlc)
