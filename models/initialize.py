@@ -71,7 +71,7 @@ class Init(object):
             elif k in ("-f", "--config_file"):
                 cls.config['config_file'] = v
             else:
-                print "unhandled option"
+                pass
 
         if not os.path.isfile(cls.config['config_file']):
             raise SystemError(u'配置文件不存在, 请指明配置文件路径')
