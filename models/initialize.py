@@ -57,7 +57,7 @@ class Init(object):
 
         opts = None
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hc:',
+            opts, args = getopt.getopt(sys.argv[1:], 'hc:n:s:',
                                        ['help', 'config_file='])
         except getopt.GetoptError as e:
             print str(e)
