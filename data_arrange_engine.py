@@ -73,7 +73,12 @@ class DataArrangeEngine(object):
     @classmethod
     def generate_ohlc_key(cls):
 
-        time_line_timestamp = cls.timestamp + cls.granularity - cls.timestamp % cls.granularity
+        remainder = cls.timestamp % cls.granularity
+
+        time_line_timestamp = cls.timestamp
+
+        if remainder:
+            time_line_timestamp = cls.timestamp + cls.granularity - remainder
 
         # 20171017:093600
         time_line = time.strftime("%Y%m%d:%H%M%S", time.localtime(time_line_timestamp))
