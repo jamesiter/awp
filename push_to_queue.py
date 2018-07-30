@@ -131,7 +131,7 @@ def run():
         date_time = row[0].split(' ')
 
         awp_tick['trading_day'] = date_time[0].replace('-', '')
-        awp_tick['update_time'] = date_time[1].split('.')[0].replace(':', '')
+        awp_tick['update_time'] = date_time[1].replace(':', '')
 
         if config['is_tick']:
             awp_tick['last_price'] = row[1]
