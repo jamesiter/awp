@@ -2,132 +2,109 @@
 # -*- coding: utf-8 -*-
 
 
-import sys
-import threading
-from copy import deepcopy
-from data_sewing_machine import sewing_data_to_file_and_depositary, incept_config, load_data_from_file
-from data_sewing_machine import init_k_line_pump, get_k_line_column, DEPOSITARY_OF_KLINE, q_macs
-from data_sewing_machine import llv, hhv, cross_up, cross_down
-from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD
+import traceback
+import signal
 
-import Queue
+import time
+from datetime import timedelta
+import jimit as ji
+import json
 
-if sys.platform == 'win32':
-    from ctp_win32 import ApiStruct, MdApi, TraderApi
+from flask import request
 
-elif sys.platform == 'linux2':
-    from ctp_linux64 import ApiStruct, MdApi, TraderApi
+try:
+    from flask_session import Session
+except ImportError as e:
+    # 兼容老版本
+    from flask.ext.session import Session
+
+from werkzeug.debug import get_current_traceback
+
+from models import Utils
+from models.initialize import logger, app
+import api_route_table
+from models import Database as db
+
+from api.ohlc import blueprint as ohlc_blueprint
+from api.ohlc import blueprints as ohlc_blueprints
 
 
 __author__ = 'James Iter'
-__date__ = '2018/4/22'
+__date__ = '2018/8/1'
 __contact__ = 'james.iter.cn@gmail.com'
 __copyright__ = '(c) 2018 by James Iter.'
 
 
-inst = [u'AP810']
-BROKER_ID = '9999'
-INVESTOR_ID = '116667'
-PASSWORD = '110.com'
-ADDRESS_MD = 'tcp://180.168.146.187:10031'
+@app.after_request
+@Utils.dumps2response
+def r_after_request(response):
+    try:
+        # https://developer.mozilla.org/en/HTTP_access_control
+        # (中文版) https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS#Access-Control-Allow-Credentials
+        # http://www.w3.org/TR/cors/
+        # 由于浏览器同源策略，凡是发送请求url的协议、域名、端口三者之间任意一与当前页面地址不同即为跨域。
 
-q_depth_market_data = Queue.Queue()
+        if request.referrer is None:
+            # 跑测试脚本时，用该规则。
+            response.headers['Access-Control-Allow-Origin'] = '*'
+        else:
+            # 生产环境中，如果前后端分离。那么请指定具体的前端域名地址，不要用如下在开发环境中的便捷方式。
+            # -- Access-Control-Allow-Credentials为true，携带cookie时，不允许Access-Control-Allow-Origin为通配符，是浏览器对用户的一种安全保护。
+            # -- 至少能避免登录山寨网站，骗取用户相关信息。
+            response.headers['Access-Control-Allow-Origin'] = '/'.join(request.referrer.split('/')[:3])
 
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Methods'] = 'HEAD, GET, POST, DELETE, OPTIONS, PATCH, PUT'
+        response.headers['Access-Control-Allow-Headers'] = 'X-Request-With, Content-Type'
+        response.headers['Access-Control-Expose-Headers'] = 'Set-Cookie'
 
-class MyMdApi(MdApi):
-    def __init__(self, instruments, broker_id,
-                 investor_id, password, *args, **kwargs):
-        self.request_id = 0
-        self.instruments = instruments
-        self.broker_id = broker_id
-        self.investor_id = investor_id
-        self.password = password
-
-    def OnRspError(self, info, request_id, is_last):
-        print " Error: " + info
-
-    @staticmethod
-    def is_error_rsp_info(info):
-        if info.ErrorID != 0:
-            print "ErrorID=", info.ErrorID, ", ErrorMsg=", info.ErrorMsg
-        return info.ErrorID != 0
-
-    def OnHeartBeatWarning(self, _time):
-        print "onHeartBeatWarning", _time
-
-    def OnFrontConnected(self):
-        print "OnFrontConnected:"
-        self.user_login(self.broker_id, self.investor_id, self.password)
-
-    def user_login(self, broker_id, investor_id, password):
-        req = ApiStruct.ReqUserLogin(BrokerID=broker_id, UserID=investor_id, Password=password)
-
-        self.request_id += 1
-        ret = self.ReqUserLogin(req, self.request_id)
-
-    def OnRspUserLogin(self, user_login, info, rid, is_last):
-        print "OnRspUserLogin", is_last, info
-
-        if is_last and not self.is_error_rsp_info(info):
-            print "get today's trading day:", repr(self.GetTradingDay())
-            self.subscribe_market_data(self.instruments)
-
-    def subscribe_market_data(self, instruments):
-        self.SubscribeMarketData(instruments)
-
-    def OnRtnDepthMarketData(self, depth_market_data):
-        q_depth_market_data.put(deepcopy(depth_market_data))
+        return response
+    except ji.JITError, e:
+        return json.loads(e.message)
 
 
-def login():
-    # 登录行情服务器
-    user = MyMdApi(instruments=inst, broker_id=BROKER_ID, investor_id=INVESTOR_ID, password=PASSWORD)
-    user.Create("data")
-    user.RegisterFront(ADDRESS_MD)
-    user.Init()
-    print u'行情服务器登录成功'
-
-    while True:
-        try:
-            payload = q_depth_market_data.get(timeout=1)
-            sewing_data_to_file_and_depositary(depth_market_data=payload)
-            q_depth_market_data.task_done()
-            c = get_k_line_column(instrument_id='rb1805', interval=60, depth=10)
-            h = hhv(c, step=10)
-            _l = llv(c, step=10)
-            cu = cross_up(series_a=h, series_b=_l)
-            cd = cross_down(series_a=_l, series_b=h)
-            pass
-
-        except Queue.Empty as e:
-            pass
+@app.teardown_request
+def teardown_request(exception):
+    if exception:
+        _traceback = get_current_traceback()
+        logger.error(_traceback.plaintext)
 
 
-def macs_process():
-    while True:
-        try:
-            payload = q_macs.get(timeout=1)
-            print payload
+# noinspection PyBroadException
+try:
+    db.init_conn_redis()
 
-        except Queue.Empty as e:
-            pass
+    app.register_blueprint(ohlc_blueprint)
+    app.register_blueprint(ohlc_blueprints)
+
+except:
+    logger.error(traceback.format_exc())
+
+# noinspection PyBroadException
+try:
+    signal.signal(signal.SIGTERM, Utils.signal_handle)
+    signal.signal(signal.SIGINT, Utils.signal_handle)
+
+except:
+    logger.error(traceback.format_exc())
+    exit(-1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    # noinspection PyBroadException
+    try:
 
-    t = threading.Thread(target=macs_process)
-    t.setDaemon(False)
-    t.start()
+        app.run(host=app.config['listen'], port=app.config['port'], use_reloader=False, threaded=True)
 
-    config = incept_config()
-    load_data_from_file(instruments_id='rb1805,AP810', granularities='1,2,5')
-    init_k_line_pump()
+        while True:
+            if Utils.exit_flag:
+                # 主线程即将结束
+                break
+            time.sleep(1)
 
-    workdays = TradingPeriod.get_workdays(begin=config['begin'], end=config['end'])
-    workdays_exchange_trading_period_by_ts = \
-        TradingPeriod.get_workdays_exchange_trading_period(
-            _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
+        print 'Main say bye-bye!'
 
-    login()
-
+    except:
+        logger.error(traceback.format_exc())
+        exit(-1)
 

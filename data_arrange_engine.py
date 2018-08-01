@@ -207,4 +207,10 @@ class DataArrangeEngine(object):
                 time.sleep(1)
 
 
-DataArrangeEngine.launch()
+if __name__ == '__main__':
+    try:
+        DataArrangeEngine.launch()
+
+    except:
+        logger.error(traceback.format_exc())
+        exit(-1)

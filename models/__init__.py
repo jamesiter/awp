@@ -27,6 +27,14 @@ from orm import (
     ORM
 )
 
+from ohlc_index import (
+    OHLCIndex
+)
+
+from ohlc import (
+    OHLC
+)
+
 
 __author__ = 'James Iter'
 __date__ = '2018/7/29'
@@ -35,6 +43,6 @@ __copyright__ = '(c) 2018 by James Iter.'
 
 
 __all__ = [
-    'Rules', 'Utils', 'Init', 'Database', 'FilterFieldType', 'Filter', 'ORM'
+    'Rules', 'Utils', 'Init', 'Database', 'FilterFieldType', 'Filter', 'ORM', 'OHLCIndex', 'OHLC'
 ]
 
