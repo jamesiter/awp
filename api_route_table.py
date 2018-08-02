@@ -20,3 +20,14 @@ add_rule_api(ohlc.blueprint, '/<contract_code>/<granularity>/<start>/<end>',
 add_rule_api(ohlc.blueprint, '/_by_score/<contract_code>/<granularity>/<_min>/<_max>',
              api_func='ohlc.r_get_by_score', methods=['GET'])
 
+add_rule_api(ohlc.blueprint, '/_hhv/<contract_code>/<granularity>/<start>/<end>/<step>',
+             api_func='ohlc.r_hhv_by_range', methods=['GET'])
+
+add_rule_api(ohlc.blueprint, '/_llv/<contract_code>/<granularity>/<start>/<end>/<step>',
+             api_func='ohlc.r_llv_by_range', methods=['GET'])
+
+add_rule_api(ohlc.blueprint, '/_hhv_llv_cross_up_by_range/<contract_code>/<granularity>/<start>/<end>/<steps>',
+             api_func='ohlc.r_hhv_llv_cross_up_by_range', methods=['GET'])
+
+add_rule_api(ohlc.blueprint, '/_hhv_llv_cross_down_by_range/<contract_code>/<granularity>/<start>/<end>/<steps>',
+             api_func='ohlc.r_hhv_llv_cross_down_by_range', methods=['GET'])

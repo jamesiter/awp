@@ -95,3 +95,134 @@ def r_get_by_score(contract_code, granularity, _min, _max):
 
     return ret
 
+
+@Utils.dumps2response
+def r_hhv_by_range(contract_code, granularity, start, end, step):
+    ret = dict()
+    ret['state'] = ji.Common.exchange_state(20000)
+
+    ohlc_index = OHLCIndex()
+    ohlc_index.contract_code = contract_code
+    ohlc_index.granularity = granularity
+    ohlc_index.get_ohlc_index_key()
+
+    if not ohlc_index.exist():
+        ret['state'] = ji.Common.exchange_state(40401)
+        return ret
+
+    if not ohlc_index.z_type():
+        ret['state'] = ji.Common.exchange_state(41202)
+        return ret
+
+    ohlc_keys = ohlc_index.get_by_range(start=start, end=end)
+
+    c = list()
+    for ohlc in OHLC.get_by_ohlc_keys(ohlc_keys=ohlc_keys):
+        c.append(ohlc['high'])
+
+    ret['data'] = OHLC.hhv(series=c, step=int(step))
+
+    return ret
+
+
+@Utils.dumps2response
+def r_llv_by_range(contract_code, granularity, start, end, step):
+    ret = dict()
+    ret['state'] = ji.Common.exchange_state(20000)
+
+    ohlc_index = OHLCIndex()
+    ohlc_index.contract_code = contract_code
+    ohlc_index.granularity = granularity
+    ohlc_index.get_ohlc_index_key()
+
+    if not ohlc_index.exist():
+        ret['state'] = ji.Common.exchange_state(40401)
+        return ret
+
+    if not ohlc_index.z_type():
+        ret['state'] = ji.Common.exchange_state(41202)
+        return ret
+
+    ohlc_keys = ohlc_index.get_by_range(start=start, end=end)
+
+    c = list()
+    for ohlc in OHLC.get_by_ohlc_keys(ohlc_keys=ohlc_keys):
+        c.append(ohlc['high'])
+
+    ret['data'] = OHLC.llv(series=c, step=int(step))
+
+    return ret
+
+
+@Utils.dumps2response
+def r_hhv_llv_cross_up_by_range(contract_code, granularity, start, end, steps):
+    ret = dict()
+    ret['state'] = ji.Common.exchange_state(20000)
+
+    ohlc_index = OHLCIndex()
+    ohlc_index.contract_code = contract_code
+    ohlc_index.granularity = granularity
+    ohlc_index.get_ohlc_index_key()
+
+    if not ohlc_index.exist():
+        ret['state'] = ji.Common.exchange_state(40401)
+        return ret
+
+    if not ohlc_index.z_type():
+        ret['state'] = ji.Common.exchange_state(41202)
+        return ret
+
+    ohlc_keys = ohlc_index.get_by_range(start=start, end=end)
+
+    c = list()
+    for ohlc in OHLC.get_by_ohlc_keys(ohlc_keys=ohlc_keys):
+        c.append(ohlc['high'])
+
+    steps = steps.split(',')
+
+    if steps.__len__() < 2:
+        steps.append(steps[0])
+
+    _h = OHLC.llv(series=c, step=int(steps[0]))
+    _l = OHLC.llv(series=c, step=int(steps[1]))
+
+    ret['data'] = OHLC.cross_up(series_a=_h, series_b=_l)
+
+    return ret
+
+
+@Utils.dumps2response
+def r_hhv_llv_cross_down_by_range(contract_code, granularity, start, end, steps):
+    ret = dict()
+    ret['state'] = ji.Common.exchange_state(20000)
+
+    ohlc_index = OHLCIndex()
+    ohlc_index.contract_code = contract_code
+    ohlc_index.granularity = granularity
+    ohlc_index.get_ohlc_index_key()
+
+    if not ohlc_index.exist():
+        ret['state'] = ji.Common.exchange_state(40401)
+        return ret
+
+    if not ohlc_index.z_type():
+        ret['state'] = ji.Common.exchange_state(41202)
+        return ret
+
+    ohlc_keys = ohlc_index.get_by_range(start=start, end=end)
+
+    c = list()
+    for ohlc in OHLC.get_by_ohlc_keys(ohlc_keys=ohlc_keys):
+        c.append(ohlc['high'])
+
+    steps = steps.split(',')
+
+    if steps.__len__() < 2:
+        steps.append(steps[0])
+
+    _h = OHLC.llv(series=c, step=int(steps[0]))
+    _l = OHLC.llv(series=c, step=int(steps[1]))
+
+    ret['data'] = OHLC.cross_down(series_a=_h, series_b=_l)
+
+    return ret
