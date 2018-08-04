@@ -2,10 +2,6 @@
 # -*- coding: utf-8 -*-
 
 
-import json
-from flask import g
-
-from initialize import app
 from models import Database as db
 
 
@@ -17,14 +13,13 @@ __copyright__ = '(c) 2018 by James Iter.'
 
 class OHLCIndex(object):
 
-    def __init__(self):
-        self.contract_code = None
-        self.granularity = None
-        self.ohlc_index_key = None
+    def __init__(self, contract_code=None, granularity=None):
+        self.contract_code = contract_code
+        self.granularity = granularity
+        self.ohlc_index_key = self.get_ohlc_index_key()
 
     def get_ohlc_index_key(self):
-        self.ohlc_index_key = ':'.join(['Z', self.contract_code + '_' + self.granularity.__str__()])
-        return self.ohlc_index_key
+        return ':'.join(['Z', self.contract_code + '_' + self.granularity.__str__()])
 
     def exist(self):
         return db.r.exists(self.ohlc_index_key)
@@ -56,4 +51,8 @@ class OHLCIndex(object):
 
     def get_by_score(self, _min=0, _max=-1):
         return db.r.zrangebyscore(self.ohlc_index_key, min=_min, max=_max)
+
+    def get_by_score_range(self, _min=0, _max=-1, start=0, end=-1):
+        num = end - start
+        return db.r.zrangebyscore(self.ohlc_index_key, min=_min, max=_max, start=start, num=num)
 

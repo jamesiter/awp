@@ -31,3 +31,6 @@ add_rule_api(ohlc.blueprint, '/_hhv_llv_cross_up_by_range/<contract_code>/<granu
 
 add_rule_api(ohlc.blueprint, '/_hhv_llv_cross_down_by_range/<contract_code>/<granularity>/<start>/<end>/<steps>',
              api_func='ohlc.r_hhv_llv_cross_down_by_range', methods=['GET'])
+
+add_rule_api(ohlc.blueprint, '/_rsv/<contract_code>/<granularity>/<n>',
+             api_func='ohlc.r_rsv', methods=['GET'])
