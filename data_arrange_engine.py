@@ -43,7 +43,7 @@ class DataArrangeEngine(object):
         'low': low_NO.,
         'close': close_NO.,
         'last_timestamp': last_timestamp,
-        'last_date_time': 'human-readable date time'
+        'date_time': 'human-readable date time'
     }
     示例@ {
         'open': 3449,
@@ -51,7 +51,7 @@ class DataArrangeEngine(object):
         'low': 3447,
         'close': 3447,
         'last_timestamp': 1508204160,
-        'last_date_time': '2017-10-17 09:36:00'
+        'date_time': '2017-10-17 09:36:00'
     }
     """
 
@@ -111,7 +111,7 @@ class DataArrangeEngine(object):
                 'low': cls.last_price,
                 'close': cls.last_price,
                 'last_timestamp': cls.timestamp,
-                'last_date_time': date_time
+                'date_time': date_time
             }
 
             db.r.hmset(ohlc_key, ohlc)
@@ -121,7 +121,7 @@ class DataArrangeEngine(object):
             return
 
         ohlc['last_timestamp'] = cls.timestamp
-        ohlc['last_date_time'] = date_time
+        ohlc['date_time'] = date_time
 
         ohlc['close'] = cls.last_price
 

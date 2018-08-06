@@ -5,6 +5,7 @@
 import os
 import re
 import json
+import requests
 
 
 __author__ = 'James Iter'
@@ -55,11 +56,16 @@ def load_data_from_file(instruments_id=None, granularities=None, data_source_dir
     return ret
 
 
-def get_k_line_column(data=None, instrument_id=None, interval=None, ohlc='high', depth=0):
+def load_data_from_server(server_base='http://127.0.0.1', instruments_id=None, granularity=None):
+    url = server_base + '/api/ohlc/' + instruments_id.__str__() + '/' + granularity.__str__()
+    r = requests.get(url)
+    j_r = json.loads(r.content)
+    return j_r['data']
+
+
+def get_k_line_column(data=None, ohlc='high', depth=0):
     """
     :param data: 数据源
-    :param instrument_id: 合约名称。
-    :param interval: 取样间隔。
     :param ohlc: [Open|High|Low|Close]。
     :param depth: 深度。默认 0 将获取所有。
     :return: list。
@@ -70,34 +76,27 @@ def get_k_line_column(data=None, instrument_id=None, interval=None, ohlc='high',
     assert ohlc in ['open', 'high', 'low', 'close']
 
     ret = list()
-    str_interval = str(interval)
-    key = '_'.join([instrument_id, str_interval])
-    max_depth = data[key].__len__()
+    max_depth = data.__len__()
     if depth == 0 or depth >= max_depth:
         depth = max_depth
 
     depth = 0 - depth
 
     for i in range(depth, 0):
-        ret.append((data[key][i][ohlc], data[key][i]['date_time']))
+        ret.append((data[i][ohlc], data[i]['date_time']))
 
     return ret
 
 
-def get_last_k_line(data=None, instrument_id=None, interval=None):
+def get_last_k_line(data=None):
     """
     :param data: 数据源
-    :param instrument_id: 合约名称。
-    :param interval: 取样间隔。
     :return: dict。
     """
 
-    str_interval = str(interval)
-    key = '_'.join([instrument_id, str_interval])
-
-    if 1 > data[key].__len__():
+    if 1 > data.__len__():
         return None
 
-    return data[key][-1]
+    return data[-1]
 
 
