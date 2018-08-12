@@ -256,7 +256,7 @@ config = incept_config()
 
 def sewing_data_to_file_and_depositary(depth_market_data=None):
 
-    for key in ['InstrumentID', 'LastPrice', 'TradingDay', 'UpdateTime']:
+    for key in ['InstrumentID', 'LastPrice', 'ActionDay', 'UpdateTime']:
         if not hasattr(depth_market_data, key):
             return
 
@@ -268,8 +268,8 @@ def sewing_data_to_file_and_depositary(depth_market_data=None):
         TradingPeriod.get_workdays_exchange_trading_period(
             _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
 
-    date = '-'.join([depth_market_data.TradingDay[:4], depth_market_data.TradingDay[4:6],
-                     depth_market_data.TradingDay[6:]])
+    date = '-'.join([depth_market_data.ActionDay[:4], depth_market_data.ActionDay[4:6],
+                     depth_market_data.ActionDay[6:]])
 
     date_time = ' '.join([date, depth_market_data.UpdateTime])
 
@@ -516,38 +516,38 @@ def cross_down(series_a=None, series_b=None):
 def test():
     from collections import namedtuple
 
-    DepthMarketData = namedtuple('DepthMarketData', 'TradingDay InstrumentID LastPrice UpdateTime')
+    DepthMarketData = namedtuple('DepthMarketData', 'ActionDay InstrumentID LastPrice UpdateTime')
 
     data_s = list()
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3445, UpdateTime='11:17:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3447, UpdateTime='11:17:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3443, UpdateTime='11:17:35'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3440, UpdateTime='11:17:36'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3445, UpdateTime='11:17:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3447, UpdateTime='11:17:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3443, UpdateTime='11:17:35'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3440, UpdateTime='11:17:36'))
 
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3345, UpdateTime='11:18:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3347, UpdateTime='11:18:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3243, UpdateTime='11:18:35'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3450, UpdateTime='11:18:36'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3345, UpdateTime='11:18:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3347, UpdateTime='11:18:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3243, UpdateTime='11:18:35'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3450, UpdateTime='11:18:36'))
 
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3245, UpdateTime='11:19:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3247, UpdateTime='11:19:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3243, UpdateTime='11:19:35'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3250, UpdateTime='11:19:36'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3245, UpdateTime='11:19:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3247, UpdateTime='11:19:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3243, UpdateTime='11:19:35'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3250, UpdateTime='11:19:36'))
 
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3545, UpdateTime='11:20:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3347, UpdateTime='11:20:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3243, UpdateTime='11:20:35'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3400, UpdateTime='11:20:36'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3545, UpdateTime='11:20:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3347, UpdateTime='11:20:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3243, UpdateTime='11:20:35'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3400, UpdateTime='11:20:36'))
 
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3145, UpdateTime='11:21:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3047, UpdateTime='11:21:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3643, UpdateTime='11:21:35'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3200, UpdateTime='11:21:36'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3145, UpdateTime='11:21:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3047, UpdateTime='11:21:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3643, UpdateTime='11:21:35'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3200, UpdateTime='11:21:36'))
 
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3545, UpdateTime='11:22:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3047, UpdateTime='11:22:34'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3443, UpdateTime='11:22:35'))
-    data_s.append(DepthMarketData(TradingDay='20180327', InstrumentID='rb1805', LastPrice=3500, UpdateTime='11:22:36'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3545, UpdateTime='11:22:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3047, UpdateTime='11:22:34'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3443, UpdateTime='11:22:35'))
+    data_s.append(DepthMarketData(ActionDay='20180327', InstrumentID='rb1805', LastPrice=3500, UpdateTime='11:22:36'))
 
     for data in data_s:
         sewing_data_to_file_and_depositary(depth_market_data=data)
