@@ -74,7 +74,7 @@ class MyMdApi(MdApi):
         print "OnRspUserLogin", is_last, info
 
         if is_last and not self.is_error_rsp_info(info):
-            print "get today's trading day:", repr(self.GetTradingDay())
+            print "get today's action day:", repr(self.GetTradingDay())
             self.subscribe_market_data(self.instruments)
 
     def subscribe_market_data(self, instruments):

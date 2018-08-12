@@ -7,7 +7,6 @@ import sys
 import getopt
 import json
 import time
-import re
 
 from models import Database as db
 from models.initialize import app, logger
@@ -26,8 +25,6 @@ def incept_config():
     config = {
         'granularities': '120,300,600,1800,3600'
     }
-
-    pattern = re.compile(r'\D*')
 
     def usage():
         print "Usage:%s [-s] [--data_source]" % sys.argv[0]
@@ -69,8 +66,7 @@ def incept_config():
     if 'name' not in config:
         config['name'] = os.path.basename(config['data_source']).split('.')[0]
 
-    # config['contract_code'] = pattern.match(config['name']).group()
-    config['contract_code'] = config['name']
+    config['instrument_id'] = config['name']
 
     for granularity in config['granularities'].split(','):
 
@@ -113,7 +109,7 @@ def run():
             print ' '.join([time.strftime('%H:%M:%S'), i.__str__()])
 
         awp_tick = {
-            'contract_code': config['contract_code'],
+            'instrument_id': config['instrument_id'],
             'granularities': config['granularities']
         }
 
