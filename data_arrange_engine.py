@@ -141,7 +141,7 @@ class DataArrangeEngine(object):
             'granularities': [60, 120, 300, 600, 1800],
             'contract_code': 'rb1801',
             'last_price': 3447,
-            'trading_day': '20171017',
+            'action_day': '20171017',
             'update_time': '093600'
         }
         :return:
@@ -157,18 +157,18 @@ class DataArrangeEngine(object):
             logger.warning(msg=log)
             return
 
-        trading_day = awp_tick['trading_day']
+        action_day = awp_tick['action_day']
         update_time = awp_tick['update_time']
 
         cls.contract_code = awp_tick['contract_code']
         cls.last_price = awp_tick['last_price']
 
         if update_time.find('.') != -1:
-            dt = datetime.strptime(' '.join([trading_day, update_time]), "%Y%m%d %H%M%S.%f")
+            dt = datetime.strptime(' '.join([action_day, update_time]), "%Y%m%d %H%M%S.%f")
             cls.timestamp = time.mktime(dt.timetuple()) + (dt.microsecond / 1e6)
 
         else:
-            cls.timestamp = int(time.mktime(time.strptime(' '.join([trading_day, update_time]), "%Y%m%d %H%M%S")))
+            cls.timestamp = int(time.mktime(time.strptime(' '.join([action_day, update_time]), "%Y%m%d %H%M%S")))
 
         for granularity in awp_tick['granularities']:
             cls.granularity = granularity

@@ -106,11 +106,15 @@ def login():
             payload = q_depth_market_data.get(timeout=1)
             q_depth_market_data.task_done()
 
+            # 过滤 交易量为 0 的假数据
+            if payload.Volume == 0:
+                continue
+
             awp_tick = {
                 'granularities': granularities,
                 'contract_code': payload.InstrumentID,
                 'last_price': payload.LastPrice,
-                'trading_day': payload.TradingDay,
+                'action_day': payload.ActionDay,
                 'update_time': payload.UpdateTime.replace(':', '')
             }
 

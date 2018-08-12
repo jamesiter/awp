@@ -137,14 +137,14 @@ class DateConverter(object):
         :param save_dir_path: 文件存储目录路径
         :return:
         """
-        for key in ['last_price', 'trading_day', 'update_time']:
+        for key in ['last_price', 'action_day', 'update_time']:
             if key not in depth_market_data:
                 return
 
-        trading_day = depth_market_data['trading_day']
+        action_day = depth_market_data['action_day']
         update_time = depth_market_data['update_time']
 
-        origin_date_time = ' '.join([trading_day, update_time])
+        origin_date_time = ' '.join([action_day, update_time])
 
         if self.is_tick is None:
             if update_time.find('.') != -1:
@@ -160,7 +160,7 @@ class DateConverter(object):
 
         else:
             ts = int(time.mktime(time.strptime(origin_date_time, "%Y%m%d %H:%M:%S")))
-            # ts = int(time.mktime((int(trading_day[:4]), int(trading_day[4:6]), int(trading_day[6:]),
+            # ts = int(time.mktime((int(action_day[:4]), int(action_day[4:6]), int(action_day[6:]),
             #                       int(update_time[:2]), int(update_time[3:5]), int(update_time[6:8]),
             #                       0, 0, 0)))
 
@@ -307,7 +307,7 @@ def run():
                 exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[date_time[0]]):
             continue
 
-        depth_market_data['trading_day'] = ''.join(date_time[0].split('-'))
+        depth_market_data['action_day'] = ''.join(date_time[0].split('-'))
         depth_market_data['update_time'] = date_time[1]
 
         if config['is_tick']:
