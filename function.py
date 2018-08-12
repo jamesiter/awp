@@ -7,6 +7,11 @@ import re
 import json
 import requests
 
+from datetime import datetime
+import time
+
+from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD, FUTURES_TRADING_PERIOD_MAPPING, HOLIDAYS
+
 
 __author__ = 'James Iter'
 __date__ = '2018/5/13'
@@ -100,3 +105,31 @@ def get_last_k_line(data=None):
     return data[-1]
 
 
+def trading_time_filter(date_time=None, contract_code=None, exchange_trading_period_by_ts=None):
+    is_tick = False
+    if date_time.find('.') != -1:
+        is_tick = True
+
+    if is_tick:
+        dt = datetime.strptime(date_time, "%Y%m%d %H%M%S.%f")
+        ts = time.mktime(dt.timetuple()) + (dt.microsecond / 1e6)
+    else:
+        ts = int(time.mktime(time.strptime(date_time, "%Y%m%d %H%M%S")))
+
+    contract_trading_period_ts = list()
+
+    for trading_period in FUTURES_TRADING_PERIOD_MAPPING[contract_code]:
+        if trading_period.exchange_code not in exchange_trading_period_by_ts:
+            continue
+
+        if trading_period.period not in exchange_trading_period_by_ts[trading_period.exchange_code]:
+            continue
+
+        contract_trading_period_ts.extend(
+            exchange_trading_period_by_ts[trading_period.exchange_code][trading_period.period])
+
+    for trading_period_ts in contract_trading_period_ts:
+        if trading_period_ts[0] <= ts <= trading_period_ts[1]:
+            return True
+
+    return False

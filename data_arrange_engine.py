@@ -7,10 +7,13 @@ import json
 import traceback
 from datetime import datetime
 import decimal
+import re
 
 from models import Utils
 from models import Database as db
 from models.initialize import app, logger
+from trading_period import TradingPeriod, EXCHANGE_TRADING_PERIOD, FUTURES_TRADING_PERIOD_MAPPING, HOLIDAYS
+from function import trading_time_filter
 
 
 __author__ = 'James Iter'
@@ -20,6 +23,8 @@ __copyright__ = '(c) 2018 by James Iter.'
 
 
 db.init_conn_redis()
+
+pattern = re.compile(r'\D*')
 
 
 class DataArrangeEngine(object):
@@ -56,7 +61,7 @@ class DataArrangeEngine(object):
     """
 
     # rb1801
-    contract_code = None
+    instrument_id = None
 
     # 120 (秒)
     granularity = None
@@ -69,7 +74,7 @@ class DataArrangeEngine(object):
 
     @classmethod
     def generate_ohlc_index_key(cls):
-        return ':'.join(['Z', cls.contract_code + '_' + cls.granularity.__str__()])
+        return ':'.join(['Z', cls.instrument_id + '_' + cls.granularity.__str__()])
 
     @classmethod
     def generate_ohlc_key(cls):
@@ -83,7 +88,7 @@ class DataArrangeEngine(object):
 
         # 20171017:093600
         time_line = time.strftime("%Y%m%d:%H%M%S", time.localtime(time_line_timestamp))
-        return ':'.join(['H', cls.contract_code + '_' + cls.granularity.__str__(), time_line])
+        return ':'.join(['H', cls.instrument_id + '_' + cls.granularity.__str__(), time_line])
 
     @classmethod
     def generate_ohlc_index(cls):
@@ -139,7 +144,7 @@ class DataArrangeEngine(object):
         数据编排
         :param awp_tick: {
             'granularities': [60, 120, 300, 600, 1800],
-            'contract_code': 'rb1801',
+            'instrument_id': 'rb1801',
             'last_price': 3447,
             'action_day': '20171017',
             'update_time': '093600'
@@ -160,7 +165,7 @@ class DataArrangeEngine(object):
         action_day = awp_tick['action_day']
         update_time = awp_tick['update_time']
 
-        cls.contract_code = awp_tick['contract_code']
+        cls.instrument_id = awp_tick['instrument_id']
         cls.last_price = awp_tick['last_price']
 
         if update_time.find('.') != -1:
@@ -177,6 +182,11 @@ class DataArrangeEngine(object):
 
     @classmethod
     def launch(cls):
+        workdays = TradingPeriod.get_workdays(begin='2016-12-31', end='2018-10-07')
+        workdays_exchange_trading_period_by_ts = \
+            TradingPeriod.get_workdays_exchange_trading_period(
+                _workdays=workdays, exchange_trading_period=EXCHANGE_TRADING_PERIOD)
+
         while True:
             if Utils.exit_flag:
                 msg = 'Thread DataArrangeEngine say bye-bye'
@@ -193,6 +203,20 @@ class DataArrangeEngine(object):
                     continue
 
                 awp_tick = json.loads(awp_tick)
+
+                # 过滤交易量为 0 的假数据
+                if 'volume' in awp_tick and awp_tick['volume'] == 0:
+                    continue
+
+                contract_code = pattern.match(awp_tick['instrument_id']).group()
+                action_day = awp_tick['action_day']
+                update_time = awp_tick['update_time']
+                if not trading_time_filter(
+                        date_time=' '.join([action_day, update_time]), contract_code=contract_code,
+                        exchange_trading_period_by_ts=workdays_exchange_trading_period_by_ts[
+                            '-'.join([action_day[:4], action_day[4:6], action_day[6:]])]):
+                    continue
+
                 cls.data_arrange(awp_tick=awp_tick)
 
             except AttributeError as e:
