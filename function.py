@@ -148,3 +148,26 @@ def generate_ohlc_key(instrument_id=None, granularity=None, timestamp=None):
     time_line = time.strftime("%Y%m%d:%H%M%S", time.localtime(time_line_timestamp))
     return ':'.join(['H', instrument_id + '_' + granularity.__str__(), time_line])
 
+
+def ma(elements=None, step=None):
+    assert isinstance(elements, list)
+    assert isinstance(step, int)
+
+    import decimal
+
+    numbers = list()
+    ma_list = list()
+
+    for ele in elements:
+        numbers.append(decimal.Decimal(ele[0]))
+        date_time = ele[1]
+
+        if numbers.__len__() < step:
+            ma_list.append((float('%0.2f' % (float(sum(numbers)) / numbers.__len__())), date_time))
+
+        else:
+            numbers = numbers[0 - step:]
+            ma_list.append((float('%0.2f' % (float(sum(numbers)) / numbers.__len__())), date_time))
+
+    return ma_list
+

@@ -10,7 +10,7 @@ import decimal
 
 from models import Utils
 from models.initialize import logger
-from function import load_data_from_server, get_k_line_column, generate_ohlc_key
+from function import load_data_from_server, get_k_line_column, generate_ohlc_key, ma
 
 
 if sys.platform == 'win32':
@@ -160,8 +160,12 @@ def login():
                     data.append(nest[k])
                     del nest[k]
 
-                high = get_k_line_column(data=data, depth=10)
+                high = get_k_line_column(data=data, depth=20)
+                ma_5 = ma(elements=high, step=5)
+                ma_10 = ma(elements=high, step=10)
                 print high
+                print ma_5
+                print ma_10
 
             print nest
 
