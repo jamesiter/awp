@@ -133,3 +133,18 @@ def trading_time_filter(date_time=None, contract_code=None, exchange_trading_per
             return True
 
     return False
+
+
+def generate_ohlc_key(instrument_id=None, granularity=None, timestamp=None):
+
+    remainder = timestamp % granularity
+
+    time_line_timestamp = timestamp
+
+    if remainder:
+        time_line_timestamp = timestamp + granularity - remainder
+
+    # 20171017:093600
+    time_line = time.strftime("%Y%m%d:%H%M%S", time.localtime(time_line_timestamp))
+    return ':'.join(['H', instrument_id + '_' + granularity.__str__(), time_line])
+
