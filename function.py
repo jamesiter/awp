@@ -149,7 +149,7 @@ def generate_ohlc_key(instrument_id=None, granularity=None, timestamp=None):
     return ':'.join(['H', instrument_id + '_' + granularity.__str__(), time_line])
 
 
-def ma(elements=None, step=None):
+def ma(elements=None, step=None, with_time=False):
     assert isinstance(elements, list)
     assert isinstance(step, int)
 
@@ -163,11 +163,53 @@ def ma(elements=None, step=None):
         date_time = ele[1]
 
         if numbers.__len__() < step:
-            ma_list.append((float('%0.2f' % (float(sum(numbers)) / numbers.__len__())), date_time))
+            avg = float('%0.2f' % (float(sum(numbers)) / numbers.__len__()))
 
         else:
             numbers = numbers[0 - step:]
-            ma_list.append((float('%0.2f' % (float(sum(numbers)) / numbers.__len__())), date_time))
+            avg = float('%0.2f' % (float(sum(numbers)) / numbers.__len__()))
+
+        if with_time:
+            ma_list.append((avg, date_time))
+
+        else:
+            ma_list.append(avg)
 
     return ma_list
+
+
+def cross(series_a=None, series_b=None):
+
+    assert isinstance(series_a, list)
+    assert isinstance(series_b, list)
+    assert series_a.__len__() == series_b.__len__()
+
+    cross_series = list()
+
+    for i, v in enumerate(series_a):
+        if i > 0:
+            if series_a[i] > series_b[i] and series_a[i - 1] <= series_b[i - 1]:
+                cross_series.append(True)
+                continue
+
+        cross_series.append(None)
+
+    return cross_series
+
+
+def be_apart_from(series):
+    assert isinstance(series, list)
+    assert series.__len__() > 0
+
+    i = series.__len__() - 1
+
+    while i >= 0:
+
+        if series[i] is True:
+            return series.__len__() - i
+
+        i -= 1
+
+    return None
+
 

@@ -10,7 +10,7 @@ import decimal
 
 from models import Utils
 from models.initialize import logger
-from function import load_data_from_server, get_k_line_column, generate_ohlc_key, ma
+from function import load_data_from_server, get_k_line_column, generate_ohlc_key, ma, cross, be_apart_from
 
 
 if sys.platform == 'win32':
@@ -166,6 +166,10 @@ def login():
                 print high
                 print ma_5
                 print ma_10
+                cu = cross(ma_5, ma_10)
+                print cu
+                far = be_apart_from(cu)
+                print far
 
             print nest
 
