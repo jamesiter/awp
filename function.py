@@ -149,7 +149,7 @@ def generate_ohlc_key(instrument_id=None, granularity=None, timestamp=None):
     return ':'.join(['H', instrument_id + '_' + granularity.__str__(), time_line])
 
 
-def ma(elements=None, step=None, with_time=False):
+def ma(elements=None, step=None):
     assert isinstance(elements, list)
     assert isinstance(step, int)
 
@@ -159,8 +159,7 @@ def ma(elements=None, step=None, with_time=False):
     ma_list = list()
 
     for ele in elements:
-        numbers.append(decimal.Decimal(ele[0]))
-        date_time = ele[1]
+        numbers.append(decimal.Decimal(ele))
 
         if numbers.__len__() < step:
             avg = float('%0.2f' % (float(sum(numbers)) / numbers.__len__()))
@@ -169,11 +168,7 @@ def ma(elements=None, step=None, with_time=False):
             numbers = numbers[0 - step:]
             avg = float('%0.2f' % (float(sum(numbers)) / numbers.__len__()))
 
-        if with_time:
-            ma_list.append((avg, date_time))
-
-        else:
-            ma_list.append(avg)
+        ma_list.append(avg)
 
     return ma_list
 
