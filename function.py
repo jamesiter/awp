@@ -65,7 +65,14 @@ def load_data_from_server(server_base='http://127.0.0.1', instruments_id=None, g
     url = server_base + '/api/ohlc/' + instruments_id.__str__() + '/' + granularity.__str__()
     r = requests.get(url)
     j_r = json.loads(r.content)
-    return j_r['data']
+    bars = j_r['data']
+    for j in bars:
+        j[u'open'] = float(j[u'open'])
+        j[u'high'] = float(j[u'high'])
+        j[u'low'] = float(j[u'low'])
+        j[u'close'] = float(j[u'close'])
+
+    return bars
 
 
 def get_k_line_column(data=None, ohlc='high', depth=0):
