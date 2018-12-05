@@ -91,8 +91,8 @@ class Database(object):
         import socket
         cls.r = redis.StrictRedis(host=app.config.get('redis_host', '127.0.0.1'),
                                   port=app.config.get('redis_port', 6379),
-                                  db=app.config.get('redis_dbid', 0), decode_responses=True, socket_timeout=5,
-                                  socket_connect_timeout=5, socket_keepalive=True,
+                                  db=app.config.get('redis_dbid', 0), decode_responses=True, socket_timeout=600,
+                                  socket_connect_timeout=600, socket_keepalive=True,
                                   socket_keepalive_options={socket.TCP_KEEPIDLE: 2, socket.TCP_KEEPINTVL: 5,
                                                             socket.TCP_KEEPCNT: 10},
                                   retry_on_timeout=True)
@@ -104,8 +104,8 @@ class Database(object):
             cls.r = redis.StrictRedis(host=app.config.get('redis_host', '127.0.0.1'),
                                       port=app.config.get('redis_port', 6379),
                                       db=app.config.get('redis_dbid', 0), password=app.config.get('redis_password', ''),
-                                      decode_responses=True, socket_timeout=5,
-                                      socket_connect_timeout=5, socket_keepalive=True,
+                                      decode_responses=True, socket_timeout=600,
+                                      socket_connect_timeout=600, socket_keepalive=True,
                                       socket_keepalive_options={socket.TCP_KEEPIDLE: 2, socket.TCP_KEEPINTVL: 5,
                                                                 socket.TCP_KEEPCNT: 10},
                                       retry_on_timeout=True)
