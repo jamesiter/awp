@@ -138,8 +138,9 @@ class DataArrangeEngine(object):
 
         db.r.hmset(ohlc_key, ohlc)
 
-        ohlc['instrument_id'] = cls.instrument_id
-        db.r.publish('PS:MinuteKLine', message=json.dumps(ohlc))
+        if cls.granularity == 60:
+            ohlc['instrument_id'] = cls.instrument_id
+            db.r.publish('PS:MinuteKLine', message=json.dumps(ohlc))
 
     @classmethod
     def data_arrange(cls, awp_tick=None):
