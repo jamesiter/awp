@@ -4,18 +4,21 @@ from function import generate_ohlc_key
 import Queue
 from datetime import datetime
 import time
-# import decimal
+import decimal
 
 q_bar = Queue.Queue()
 nest = dict()
+int_instruments = ['rb', 'hc', 'ru', 'ni', 'cu']
 
-def tickToBar(tick, granularity = 60):
+def tickToBar(tick, granularity = 180):
     #tick data to bar
-    global bars
+    # global bars
     instrument_id = tick.InstrumentID
     action_day = tick.ActionDay
     update_time = tick.UpdateTime.replace(':', '')
-    last_price = float(tick.LastPrice)   #将LastPrice 转换为浮点数类型
+
+    last_price = int(tick.LastPrice) if instrument_id[0:2] in int_instruments else float(tick.LastPrice)
+
     volume = tick.Volume
 
     # if volume == 0:
