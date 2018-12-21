@@ -3,13 +3,20 @@
 __author__ = 'chengzhi'
 
 from datetime import datetime
-from tqsdk.api import TqApi
-from tqsdk.tools.downloader import DataDownloader
 
+# from tqsdk.tools.downloader import DataDownloader
+
+
+from contextlib import closing
+from tqsdk import TqApi, TqSim
+from tqsdk.tools import DataDownloader
 import getopt,os,sys,re
-import json
 
-api = TqApi("SIM")
+api = TqApi(TqSim())
+
+
+# url = 'ws://192.168.1.20:7777'
+# api = TqApi("SIM",url)
 
 # 下载从 2018-01-01 到 2018-06-01 的 cu1805,cu1807,IC1803 分钟线数据，所有数据按 cu1805 的时间对齐
 # 例如 cu1805 夜盘交易时段, IC1803 的各项数据为 N/A
@@ -100,53 +107,16 @@ def run(instrumentid, period, exchangeId = 'SHFE'):
     kd = DataDownloader(api, symbol_list=[instid], dur_sec=period,
                     start_dt=datetime(2016, 1, 1), end_dt=enddt, csv_file_name=datafile)
 
+    with closing(api):
 
-    while not kd.is_finished():
-        api.wait_update()
-        print("progress: kline: %.2f%%" % kd.get_progress())
-    return datafile
+	    while not kd.is_finished():
+	        api.wait_update()
+	        print("progress: kline: %.2f%%" % kd.get_progress())
 
-def tq_to_awp(infile):
-    klines = list()
-
-    outfile = infile.split('.')[0]+'.json'
-
-    with open(infile) as f:
-        for i, line in enumerate(f):
-
-            # 忽略 csv 头
-            if i == 0:
-                continue
-            # 读取数据行，赋值给变量
-            row = line.split(',')
-
-            # print date_time, topen, thigh, tlow, tclose
-            # 转换为字典格式
-            k_line = {'open': float(row[1]), 'high': float(row[2]), 'low': float(row[3]), 'close': float(row[4]),
-                      'date_time': row[0]}
-
-            # append到k线列表中
-            klines.append(k_line)
-
-            # 查看格式是否正确
-            # print date_time, topen, thigh, tlow, tclose
-            # print len(klines)
-
-    with open(outfile, 'a') as f:
-        for kline in klines:
-            f.writelines(json.dumps(kline, ensure_ascii=False) + '\n')
-        f.close()
 
 
 config = incept_config()
-
 print(config['name'], config['granularities'])
 
-infile = run(instrumentid=config['name'], period=config['granularities'])
-print('download complete, begin transfer...')
-
-tq_to_awp(infile=infile)
-
-print('transfer complete...')
-
+run(instrumentid=config['name'], period=config['granularities'])
 
