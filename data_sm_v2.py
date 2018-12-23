@@ -12,19 +12,16 @@ from models import Utils
 from models.initialize import logger
 from function import load_data_from_server, get_k_line_column, generate_ohlc_key, ma, cross, be_apart_from
 
-
 if sys.platform == 'win32':
     from ctp_win32 import ApiStruct, MdApi, TraderApi
 
 elif sys.platform == 'linux2':
     from ctp_linux64 import ApiStruct, MdApi, TraderApi
 
-
 __author__ = 'James Iter'
 __date__ = '2018/8/27'
 __contact__ = 'james.iter.cn@gmail.com'
 __copyright__ = '(c) 2018 by James Iter.'
-
 
 inst = [u'rb1810']
 BROKER_ID = '9999'
@@ -67,7 +64,8 @@ class MyMdApi(MdApi):
         print "onHeartBeatWarning", _time
 
     def OnFrontConnected(self):
-        print "OnFrontConnected:"
+        print
+        "OnFrontConnected:"
         self.user_login(self.broker_id, self.investor_id, self.password)
 
     def user_login(self, broker_id, investor_id, password):
@@ -97,7 +95,8 @@ def login():
     user.RegisterFront(ADDRESS_MD)
     user.Init()
 
-    print u'行情服务器登录成功'
+    print
+    u'行情服务器登录成功'
 
     while True:
 
@@ -112,10 +111,10 @@ def login():
             payload = q_depth_market_data.get(timeout=1)
             q_depth_market_data.task_done()
 
-            instrument_id = payload.InstrumentID
             action_day = payload.ActionDay
+            instrument_id = payload.InstrumentID
             update_time = payload.UpdateTime.replace(':', '')
-            last_price = payload.LastPrice
+            last_price = float(payload.LastPrice)
             volume = payload.Volume
 
             if volume == 0:
@@ -147,10 +146,10 @@ def login():
 
             nest[ohlc_key]['close'] = last_price
 
-            if last_price > decimal.Decimal(nest[ohlc_key]['high']):
+            if last_price > nest[ohlc_key]['high']:
                 nest[ohlc_key]['high'] = last_price
 
-            elif last_price < decimal.Decimal(nest[ohlc_key]['low']):
+            elif last_price < nest[ohlc_key]['low']:
                 nest[ohlc_key]['low'] = last_price
 
             if nest.__len__() > 1:
@@ -163,13 +162,13 @@ def login():
                 high = get_k_line_column(data=data, depth=20)
                 ma_5 = ma(elements=high, step=5)
                 ma_10 = ma(elements=high, step=10)
-                print high
-                print ma_5
-                print ma_10
+                print              high
+                print                ma_5
+                print  ma_10
                 cu = cross(ma_5, ma_10)
-                print cu
+                print  cu
                 far = be_apart_from(cu)
-                print far
+                print                far
 
             print nest
 
@@ -178,7 +177,5 @@ def login():
 
 
 if __name__ == "__main__":
-
     init_data()
     login()
-
