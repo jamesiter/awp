@@ -12,7 +12,7 @@ from models.initialize import logger
 from function import load_data_from_server, get_k_line_column, ma, cross, be_apart_from
 
 
-from ctp.futures import ApiStruct, MdApi, TraderApi
+from ctp_linux64 import ApiStruct, MdApi, TraderApi
 from getaccount import getAccountinfo
 from tickToBar import tickToBar, q_bar
 
