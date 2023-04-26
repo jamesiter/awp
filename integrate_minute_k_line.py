@@ -16,14 +16,14 @@ __copyright__ = '(c) 2018 by James Iter.'
 
 def incept_config():
     config = {
-        'interval': '2'
+        'interval': '13'
     }
 
     def usage():
         print "Usage:%s [-s] [--data_source]" % sys.argv[0]
         print "-s --data_source, is the path of data file."
         print "-o --output_file, is the output file. optional."
-        print "-i --interval, default is 2 minutes, delimiter is a comma. optional."
+        print "-i --interval, default is 13 minutes, delimiter is a comma. optional."
 
     opts = None
     try:
@@ -57,8 +57,10 @@ def incept_config():
         exit(1)
 
     if 'output_file' not in config:
+        inst_interval = int(config['interval'])*60
         config['output_file'] = '_'.join([os.path.basename(
-            config['data_source']).split('.')[0], config['interval']]) + '.json'
+            config['data_source']).split('_')[0], str(inst_interval)]) + '.json'
+
 
     config['interval'] = int(config['interval'])
 

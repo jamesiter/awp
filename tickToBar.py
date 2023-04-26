@@ -8,14 +8,17 @@ import decimal
 
 q_bar = Queue.Queue()
 nest = dict()
+int_instruments = ['rb', 'hc', 'ru', 'ni', 'cu']
 
 def tickToBar(tick, granularity = 180):
     #tick data to bar
-    global bars
+    # global bars
     instrument_id = tick.InstrumentID
     action_day = tick.ActionDay
     update_time = tick.UpdateTime.replace(':', '')
-    last_price = tick.LastPrice
+
+    last_price = int(tick.LastPrice) if instrument_id[0:2] in int_instruments else float(tick.LastPrice)
+
     volume = tick.Volume
 
     # if volume == 0:
@@ -47,10 +50,10 @@ def tickToBar(tick, granularity = 180):
 
     nest[ohlc_key]['close'] = last_price
 
-    if last_price > decimal.Decimal(nest[ohlc_key]['high']):
+    if last_price > nest[ohlc_key]['high']:
         nest[ohlc_key]['high'] = last_price
 
-    elif last_price < decimal.Decimal(nest[ohlc_key]['low']):
+    elif last_price < nest[ohlc_key]['low']:
         nest[ohlc_key]['low'] = last_price
 
     if nest.__len__() > 1:

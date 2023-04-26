@@ -8,6 +8,6 @@ Flask-Session>=0.3.0
 IPy>=0.83
 gunicorn
 gevent
-redis
+redis<3
 websockify
 werkzeug
