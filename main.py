@@ -102,7 +102,7 @@ if __name__ == '__main__':
                 break
             time.sleep(1)
 
-        print 'Main say bye-bye!'
+        print('Main say bye-bye!')
 
     except:
         logger.error(traceback.format_exc())
